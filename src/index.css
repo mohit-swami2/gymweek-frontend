@@ -156,3 +156,298 @@ input:focus, textarea:focus, select:focus {
   min-height: 400px;
   padding: 24px;
 }
+
+/* Toasts */
+.gymweek-toast {
+  font-family: var(--font-family) !important;
+  background: linear-gradient(135deg, #141414 0%, #1a1a1a 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(200, 255, 0, 0.06) !important;
+  padding: 14px 18px !important;
+  backdrop-filter: blur(12px);
+}
+
+.gymweek-toast__title {
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+}
+
+.gymweek-toast__desc {
+  color: var(--color-text-muted) !important;
+  font-size: 0.8rem !important;
+}
+
+.gymweek-toast--success {
+  border-left: 3px solid var(--success) !important;
+}
+
+.gymweek-toast--error {
+  border-left: 3px solid var(--destructive) !important;
+}
+
+.gymweek-toast--warning {
+  border-left: 3px solid var(--warning) !important;
+}
+
+.gymweek-toast--info {
+  border-left: 3px solid var(--info) !important;
+}
+
+.gymweek-toast__action {
+  background: var(--color-primary) !important;
+  color: #080808 !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.modal {
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(160deg, #121212 0%, #0d0d0d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+
+.modal--sm { max-width: 420px; }
+.modal--md { max-width: 520px; }
+.modal--lg { max-width: 720px; }
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.modal__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.modal__close:hover { color: var(--color-text); }
+
+.modal__body { padding: 20px 24px 24px; }
+
+/* Celebration modal */
+.celebration {
+  position: relative;
+  text-align: center;
+  padding: 8px 0 4px;
+  overflow: hidden;
+}
+
+.celebration__glow {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 255, 0, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.celebration__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(200, 255, 0, 0.12);
+  color: var(--color-primary);
+  margin-bottom: 16px;
+}
+
+.celebration__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 1.8rem;
+  margin: 0 0 8px;
+}
+
+.celebration__subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+}
+
+.celebration__streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 77, 0, 0.12);
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.celebration__quote {
+  margin: 0 0 24px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--color-primary);
+  text-align: left;
+}
+
+.celebration__quote p {
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+
+.celebration__quote cite {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: normal;
+}
+
+.celebration__actions .btn-primary {
+  width: 100%;
+}
+
+.celebration__particle {
+  position: absolute;
+  bottom: 40%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  pointer-events: none;
+}
+
+/* Streak warning */
+.streak-warning {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.streak-warning--reset {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.streak-warning strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+
+.streak-warning p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* Medals */
+.medals-section {
+  padding: 20px 24px;
+}
+
+.medals-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.medals-section__head h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.medals-section__head span {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.medals-section__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.medal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  opacity: 0.4;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.medal-card--earned {
+  opacity: 1;
+}
+
+.medal-card--active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px rgba(200, 255, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.medal-card__emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.medal-card strong {
+  color: var(--color-text);
+  font-size: 0.8rem;
+}
+
+.medals-section__next {
+  margin: 16px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}

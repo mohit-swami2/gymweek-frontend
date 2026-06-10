@@ -35,6 +35,13 @@ export function RegisterPage() {
       <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
         Already have an account? <Link to="/auth/login">Sign in</Link>
       </p>
+      <Link
+        to="/admin/login"
+        className="btn-secondary"
+        style={{ display: 'block', marginTop: '16px', textAlign: 'center', textDecoration: 'none', padding: '12px' }}
+      >
+        Login as Admin
+      </Link>
     </AuthLayout>
   );
 }

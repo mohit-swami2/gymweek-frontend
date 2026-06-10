@@ -1,0 +1,440 @@
+.planner {
+  padding: 24px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.planner__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.planner__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.planner__meta {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.planner__split-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(200, 255, 0, 0.12);
+  color: var(--color-primary);
+  border: 1px solid rgba(200, 255, 0, 0.25);
+}
+
+.planner__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Split selection */
+.split-step__intro {
+  margin-bottom: 24px;
+}
+
+.split-step__intro h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.split-step__intro p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  max-width: 560px;
+}
+
+.split-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.split-option {
+  text-align: left;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.split-option:hover {
+  border-color: rgba(200, 255, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.split-option--active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 24px rgba(200, 255, 0, 0.15);
+  background: rgba(200, 255, 0, 0.04);
+}
+
+.split-option__label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.split-option__desc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.split-option__days {
+  margin-top: 12px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Day customize table */
+.split-customize {
+  margin-top: 8px;
+}
+
+.split-customize__title {
+  font-weight: 700;
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+
+.split-customize__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.split-customize__row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.split-customize__row--rest {
+  opacity: 0.55;
+}
+
+.split-customize__day {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.split-customize__row input[type="text"] {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.split-customize__rest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Weekly grid */
+.planner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.planner-day {
+  min-height: 220px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.planner-day__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.planner-day__label {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.planner-day__focus {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--color-primary);
+  margin-bottom: 12px;
+}
+
+.planner-day--rest {
+  opacity: 0.5;
+  text-align: center;
+  justify-content: center;
+}
+
+.planner-exercise {
+  background: var(--color-background);
+  border: 1px solid rgba(200, 255, 0, 0.35);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  position: relative;
+}
+
+.planner-exercise__name {
+  font-weight: 600;
+  color: var(--color-primary);
+  padding-right: 22px;
+  margin-bottom: 8px;
+}
+
+.planner-exercise__sets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.planner-set-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.planner-set-row input {
+  padding: 6px 8px;
+  font-size: 0.75rem;
+}
+
+.planner-exercise__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 0;
+}
+
+.planner-day select {
+  font-size: 0.78rem;
+  padding: 8px;
+  margin-top: auto;
+}
+
+.planner-day--missed {
+  position: relative;
+  opacity: 0.55;
+  pointer-events: none;
+  min-height: 120px;
+}
+
+.planner-day__missed-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 12px;
+  z-index: 2;
+}
+
+.planner-day__missed-overlay span {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  letter-spacing: 0.12em;
+  color: var(--destructive);
+  text-transform: uppercase;
+}
+
+.planner-day__missed-label {
+  flex: 1;
+  text-align: center;
+  color: var(--destructive);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.split-customize__row--missed {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.planner-day__no-exercises {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+/* Plans table */
+.plans-table-wrap {
+  padding: 0;
+  overflow: hidden;
+}
+
+.plans-table__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 24px 16px;
+  flex-wrap: wrap;
+}
+
+.plans-table__head h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+.plans-table__hint {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.plans-table__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.plans-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.plans-table th,
+.plans-table td {
+  padding: 14px 24px;
+  text-align: left;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.plans-table th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.plans-table__badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-muted);
+}
+
+.plans-table__badge--current {
+  background: rgba(200, 255, 0, 0.12);
+  color: var(--color-primary);
+}
+
+.plans-table__badge--future {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+/* Week picker modal */
+.week-modal__intro {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.week-modal__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.week-modal__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.week-modal__option:hover {
+  border-color: var(--color-primary);
+  background: rgba(200, 255, 0, 0.04);
+}
+
+.week-modal__option strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.week-modal__option span {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.week-modal__option small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.week-modal__more label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}

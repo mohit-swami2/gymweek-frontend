@@ -1,39 +1,135 @@
 import { Link } from 'react-router-dom';
-import { Play, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Star } from 'lucide-react';
+import { LANDING_ASSETS } from './landingAssets.js';
+import { FloatingAsset } from './FloatingAsset.jsx';
+import { useMouseParallax } from './hooks/useMouseParallax.js';
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
 
 export function HeroSection({ section }) {
   const content = section?.content || {};
   const stats = content.stats || [];
+  const parallax = useMouseParallax(14);
 
   return (
-    <section style={{ padding: '100px 24px 80px', maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ display: 'inline-block', padding: '6px 16px', borderRadius: '20px', background: 'var(--card)', border: '1px solid var(--color-border)', fontSize: '0.8rem', color: 'var(--color-accent)', marginBottom: '24px', fontWeight: 600 }}>
-        #1 Fitness Tracking Platform
+    <section className="hero-section">
+      <div className="hero-section__assets" aria-hidden="true">
+        <FloatingAsset
+          src={LANDING_ASSETS.monitor}
+          className="hero-asset hero-asset--monitor"
+          delay={0}
+          parallax={{ x: parallax.x * 0.6, y: parallax.y * 0.4 }}
+          duration={5.5}
+        />
+        <FloatingAsset
+          src={LANDING_ASSETS.floatingTech}
+          className="hero-asset hero-asset--tech-tr"
+          delay={0.2}
+          parallax={{ x: parallax.x * -0.5, y: parallax.y * 0.5 }}
+          duration={6}
+        />
+        <FloatingAsset
+          src={LANDING_ASSETS.bench}
+          className="hero-asset hero-asset--bench"
+          delay={0.35}
+          parallax={{ x: parallax.x * 0.45, y: parallax.y * -0.35 }}
+          duration={5.2}
+        />
+        <FloatingAsset
+          src={LANDING_ASSETS.floatingTech}
+          className="hero-asset hero-asset--tech-br"
+          delay={0.5}
+          parallax={{ x: parallax.x * -0.4, y: parallax.y * -0.4 }}
+          duration={6.5}
+        />
       </div>
-      <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', lineHeight: 1.05, marginBottom: '20px' }}>
-        {section?.title || 'GymWeek'}
-      </h1>
-      <p style={{ fontSize: '1.125rem', color: 'var(--muted-foreground)', maxWidth: '560px', margin: '0 auto 40px' }}>
-        {section?.subtitle || 'Train smarter. Track harder. Crush every rep.'}
-      </p>
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <Link to="/auth/register" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', padding: '14px 28px' }}>
-          <Play size={16} fill="#080808" /> {content.ctaPrimary || 'Start Free Trial'}
-        </Link>
-        <a href="#about" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', padding: '14px 28px' }}>
-          {content.ctaSecondary || 'View Features'} <ChevronRight size={16} />
-        </a>
+
+      <div className="hero-section__center">
+        <motion.div
+          className="hero-section__badge"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={0}
+        >
+          {content.badge || '#1 Fitness Training Platform'}
+        </motion.div>
+
+        <motion.div
+          className="hero-section__title-wrap"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={1}
+        >
+          <img
+            src={LANDING_ASSETS.scriptTitle}
+            alt={section?.title || 'GymWeek'}
+            className="hero-section__title-img"
+            draggable={false}
+          />
+        </motion.div>
+
+        <motion.p
+          className="hero-section__subtitle"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={2}
+        >
+          {section?.subtitle || 'Train smarter. Track harder. Crush every rep.'}
+        </motion.p>
+
+        <motion.div
+          className="hero-section__actions"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={3}
+        >
+          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
+            <Link to="/auth/register" className="hero-section__btn-primary">
+              {content.ctaPrimary || 'Sign Up'}
+            </Link>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
+            <Link to="/auth/login" className="hero-section__btn-secondary">
+              {content.ctaSecondary || 'Login'}
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {stats.length > 0 && (
+          <motion.div
+            className="hero-section__stats"
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            custom={4}
+          >
+            {stats.map((stat) => {
+              const isRating = /rating/i.test(stat.label);
+              return (
+                <div key={stat.label} className="hero-section__stat">
+                  <div className="hero-section__stat-value">
+                    {stat.value}
+                    {isRating && <Star size={22} fill="#b6ff3b" color="#b6ff3b" />}
+                  </div>
+                  <div className="hero-section__stat-label">{stat.label}</div>
+                </div>
+              );
+            })}
+          </motion.div>
+        )}
       </div>
-      {stats.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, 1fr)`, gap: '24px', marginTop: '80px', maxWidth: '700px', marginLeft: 'auto', marginRight: 'auto' }}>
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '2rem', fontWeight: 900, color: 'var(--color-primary)' }}>{stat.value}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)' }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
     </section>
   );
 }

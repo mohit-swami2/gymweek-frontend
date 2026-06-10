@@ -35,6 +35,13 @@ export function LoginPage() {
       <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--muted-foreground)', textAlign: 'center' }}>
         <Link to="/auth/forgot-password">Forgot password?</Link> · <Link to="/auth/register">Create account</Link>
       </p>
+      <Link
+        to="/admin/login"
+        className="btn-secondary"
+        style={{ display: 'block', marginTop: '16px', textAlign: 'center', textDecoration: 'none', padding: '12px' }}
+      >
+        Login as Admin
+      </Link>
     </AuthLayout>
   );
 }

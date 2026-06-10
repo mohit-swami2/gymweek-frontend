@@ -49,6 +49,8 @@ export function ThemeProvider({ children }) {
   useEffect(() => { fetchThemes(); }, []);
 
   useEffect(() => {
+    // Public website uses fixed landing design — not dynamic theme tokens
+    if (activePanel === 'website') return;
     const theme = previewOverrides || themes.find((t) => t.targetPanel === activePanel);
     applyTheme(theme, activePanel);
   }, [themes, activePanel, previewOverrides]);

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, Trophy, Timer, Play, CheckCircle2, Circle, Zap } from 'lucide-react';
+import { Flame, Trophy, Timer, Play, CheckCircle2, Circle, Zap, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { toast } from 'sonner';
 import { ChartCard } from '../../common/components/ChartCard.jsx';
+import { CelebrationModal } from '../../common/components/CelebrationModal.jsx';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
+import { getSplitLabel } from '../planner/splitTemplates.js';
+import { STREAK_MEDALS, getCurrentMedal, getNextMedal } from '../planner/streakMedals.js';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -15,29 +18,49 @@ export function DashboardView() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [plan, setPlan] = useState(null);
+  const [streakInfo, setStreakInfo] = useState(null);
   const [volumeData, setVolumeData] = useState([]);
   const [todaySession, setTodaySession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [checkInModal, setCheckInModal] = useState(null);
+
+  const loadData = () => Promise.all([
+    fitnessApi.getSummary(),
+    fitnessApi.getCurrentPlan(),
+    fitnessApi.getVolumeProgress({ range: '4w', groupBy: 'week' }),
+    fitnessApi.getTodaySession(),
+    fitnessApi.getStreak(),
+  ]).then(([sumRes, planRes, volRes, sessionRes, streakRes]) => {
+    setSummary(sumRes.data[0]);
+    setPlan(planRes.data[0]);
+    setVolumeData(volRes.data[0]?.data || []);
+    setTodaySession(sessionRes.data[0] || null);
+    setStreakInfo(streakRes.data[0]);
+  });
 
   useEffect(() => {
-    Promise.all([
-      fitnessApi.getSummary(),
-      fitnessApi.getCurrentPlan(),
-      fitnessApi.getVolumeProgress({ range: '4w', groupBy: 'week' }),
-      fitnessApi.getTodaySession(),
-    ]).then(([sumRes, planRes, volRes, sessionRes]) => {
-      setSummary(sumRes.data[0]);
-      setPlan(planRes.data[0]);
-      setVolumeData(volRes.data[0]?.data || []);
-      setTodaySession(sessionRes.data[0] || null);
-    }).catch((err) => toast.error(err.message))
+    loadData()
+      .catch((err) => toast.error(err.message))
       .finally(() => setLoading(false));
   }, []);
 
   const handleCheckIn = async () => {
     try {
       const res = await fitnessApi.checkIn({});
-      toast.success(res.data[0]?.streakMessage || 'Checked in!');
+      const data = res.data[0];
+      if (data?.streakMessage === 'Already checked in today') {
+        toast.info('You already checked in today!');
+        return;
+      }
+      await loadData();
+      setCheckInModal({
+        title: data?.streakReset ? 'Fresh Start!' : 'Checked In!',
+        subtitle: data?.streakMessage,
+        streak: data?.currentStreak,
+        quote: data?.motivationalQuote?.text,
+        quoteAuthor: data?.motivationalQuote?.author,
+        warning: data?.streakWarning,
+      });
     } catch (err) {
       toast.error(err.message);
     }
@@ -56,6 +79,10 @@ export function DashboardView() {
   };
 
   if (loading) return <div style={{ padding: '24px' }}>Loading dashboard...</div>;
+
+  const currentStreak = streakInfo?.currentStreak ?? summary?.currentStreak ?? 0;
+  const currentMedal = getCurrentMedal(currentStreak);
+  const nextMedal = getNextMedal(currentStreak);
 
   const weekData = DAY_KEYS.map((key, i) => {
     const day = plan?.days?.find((d) => d.dayOfWeek === key);
@@ -77,7 +104,7 @@ export function DashboardView() {
   const statCards = [
     { label: 'WORKOUTS THIS WEEK', value: String(summary?.thisWeek?.count || 0), sub: 'sessions', icon: Flame },
     { label: 'TOTAL VOLUME', value: `${((summary?.thisWeek?.volume || 0) / 1000).toFixed(1)}K`, sub: 'kg this week', icon: Trophy },
-    { label: 'CURRENT STREAK', value: String(summary?.currentStreak || 0), sub: 'days', icon: Timer },
+    { label: 'CURRENT STREAK', value: String(currentStreak), sub: 'days', icon: Timer },
   ];
 
   const greeting = () => {
@@ -89,13 +116,28 @@ export function DashboardView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px', overflowY: 'auto', height: '100%' }}>
+      {streakInfo?.streakWarning && !streakInfo?.checkedInToday && (
+        <div className={`streak-warning streak-warning--${streakInfo.streakWarning.type}`}>
+          <AlertTriangle size={18} />
+          <div>
+            <strong>{streakInfo.streakWillReset ? 'Streak at risk — will reset!' : 'Streak warning'}</strong>
+            <p>{streakInfo.streakWarning.message}</p>
+          </div>
+          <button type="button" className="btn-primary" onClick={handleCheckIn} style={{ flexShrink: 0 }}>
+            Check In Now
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '2.2rem', letterSpacing: '0.02em', lineHeight: 1 }}>
             {greeting()}, {user?.name?.split(' ')[0]?.toUpperCase()}
           </div>
           <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-            {todayPlan?.focus || 'No workout planned'} · {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {plan?.splitType ? `${getSplitLabel(plan.splitType)} · ` : ''}
+            {todayPlan?.isRestDay ? 'Rest day' : (todayPlan?.focus || 'Set up your split in Planner')}
+            {' · '}{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -111,6 +153,34 @@ export function DashboardView() {
             {todaySession ? 'CONTINUE WORKOUT' : 'START WORKOUT'}
           </button>
         </div>
+      </div>
+
+      <div className="card medals-section">
+        <div className="medals-section__head">
+          <h3>Streak Medals</h3>
+          <span>Based on your check-in streak</span>
+        </div>
+        <div className="medals-section__grid">
+          {STREAK_MEDALS.filter((m) => m.min > 0).map((medal) => {
+            const earned = currentStreak >= medal.min;
+            const isCurrent = currentMedal.min === medal.min;
+            return (
+              <div
+                key={medal.min}
+                className={`medal-card${earned ? ' medal-card--earned' : ''}${isCurrent ? ' medal-card--active' : ''}`}
+              >
+                <span className="medal-card__emoji">{medal.emoji}</span>
+                <strong>{medal.name}</strong>
+                <span>{medal.min}+ days</span>
+              </div>
+            );
+          })}
+        </div>
+        {nextMedal && (
+          <p className="medals-section__next">
+            {nextMedal.min - currentStreak} more day{nextMedal.min - currentStreak === 1 ? '' : 's'} to unlock <strong>{nextMedal.emoji} {nextMedal.name}</strong>
+          </p>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
@@ -135,18 +205,29 @@ export function DashboardView() {
         </ChartCard>
 
         <div className="card">
-          <div style={{ fontWeight: 700, marginBottom: '16px' }}>This Week</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ fontWeight: 700 }}>This Week</div>
+            {plan?.splitType && (
+              <span style={{ fontSize: '0.7rem', padding: '4px 10px', borderRadius: '999px', background: 'rgba(200,255,0,0.1)', color: 'var(--color-primary)' }}>
+                {getSplitLabel(plan.splitType)}
+              </span>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             {weekData.map((d) => (
-              <div key={d.day} style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '8px' }}>{d.day}</div>
+              <div key={d.day} style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>{d.day}</div>
                 <div style={{
-                  height: '48px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  height: '52px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: d.completed ? 'var(--color-primary)' : d.rest ? 'transparent' : 'var(--color-background)',
                   border: d.today ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
                   opacity: d.rest ? 0.4 : 1,
+                  marginBottom: '6px',
                 }}>
                   {d.completed ? <CheckCircle2 size={16} color="#080808" /> : d.rest ? '—' : <Circle size={14} color="var(--color-text-muted)" />}
+                </div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={d.focus}>
+                  {d.rest ? 'Rest' : (d.focus || '—')}
                 </div>
               </div>
             ))}
@@ -172,6 +253,18 @@ export function DashboardView() {
           ))}
         </div>
       )}
+
+      <CelebrationModal
+        open={!!checkInModal}
+        onClose={() => setCheckInModal(null)}
+        title={checkInModal?.title}
+        subtitle={checkInModal?.subtitle}
+        streak={checkInModal?.streak}
+        quote={checkInModal?.quote}
+        quoteAuthor={checkInModal?.quoteAuthor}
+        primaryLabel="Let's Go!"
+        primaryAction={() => setCheckInModal(null)}
+      />
     </div>
   );
 }

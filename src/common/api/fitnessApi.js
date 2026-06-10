@@ -8,6 +8,8 @@ export const fitnessApi = {
 
   // Plans
   getCurrentPlan: () => websiteApi.get('/plans/current'),
+  getPlans: (params) => websiteApi.get('/plans', { params }),
+  getPlanForWeek: (weekStart, create = false) => websiteApi.get('/plans/week', { params: { weekStart, create: create ? 'true' : 'false' } }),
   updatePlan: (id, data) => websiteApi.patch(`/plans/${id}`, data),
 
   // Sessions

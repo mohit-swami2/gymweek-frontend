@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { websiteApi } from '../../common/api/client.js';
 import { WebsiteHeader } from './WebsiteHeader.jsx';
@@ -7,7 +8,18 @@ import { HeroSection } from './HeroSection.jsx';
 import { AboutSection } from './AboutSection.jsx';
 import { TestimonialsCarousel } from './TestimonialsCarousel.jsx';
 import { ContactForm } from './ContactForm.jsx';
-import { SocialAuth } from './SocialAuth.jsx';
+import './landing.css';
+
+function LandingBackground() {
+  return (
+    <div className="landing-page__bg" aria-hidden="true">
+      <div className="landing-page__bg-layer1" />
+      <div className="landing-page__bg-layer2" />
+      <div className="landing-page__bg-layer3" />
+      <div className="landing-page__bg-noise" />
+    </div>
+  );
+}
 
 export function LandingPage() {
   const [cms, setCms] = useState({ sections: [], testimonials: [] });
@@ -26,30 +38,40 @@ export function LandingPage() {
   const getSection = (key) => cms.sections?.find((s) => s.sectionKey === key);
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading GymWeek...</div>;
+    return (
+      <div className="landing-loading">
+        <div className="landing-loading__spinner" />
+        <span style={{ color: '#a0a0a0', fontSize: '0.9rem' }}>Loading GymWeek...</span>
+      </div>
+    );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
+    <div className="landing-page">
+      <LandingBackground />
       <WebsiteHeader />
-      <main>
+      <main className="landing-main">
         <HeroSection section={getSection('hero_section')} />
         <AboutSection section={getSection('about_us')} features={getSection('features')} />
-        <TestimonialsCarousel testimonials={cms.testimonials || []} />
-        <section id="contact" style={{ padding: '80px 24px', maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px' }}>
-            <div>
-              <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '2rem', marginBottom: '12px' }}>Get in Touch</h2>
-              <p style={{ color: 'var(--muted-foreground)', marginBottom: '32px' }}>Questions? We respond within 24 hours.</p>
-              <SocialAuth />
-            </div>
-            <ContactForm />
-          </div>
+        <section className="bottom-section">
+          <motion.div
+            className="bottom-section__inner"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <TestimonialsCarousel
+              testimonials={cms.testimonials || []}
+              title={getSection('testimonials')?.title}
+            />
+            <ContactForm section={getSection('contact_section')} />
+          </motion.div>
         </section>
       </main>
-      <footer style={{ borderTop: '1px solid var(--color-border)', padding: '32px 24px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
+      <footer className="landing-footer">
         <p>&copy; {new Date().getFullYear()} GymWeek. All rights reserved.</p>
-        <div style={{ marginTop: '8px', display: 'flex', gap: '16px', justifyContent: 'center' }}>
+        <div className="landing-footer__links">
           <Link to="/auth/login">Login</Link>
           <Link to="/auth/register">Sign Up</Link>
           <Link to="/privacy">Privacy</Link>
