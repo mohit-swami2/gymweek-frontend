@@ -1,5 +1,5 @@
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, MessageSquare, Palette, FileText, Star, Mail, Shield, ScrollText, LogOut, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Palette, FileText, Star, Mail, Shield, ScrollText, LogOut, ChevronDown, Dumbbell } from 'lucide-react';
 import { useState } from 'react';
 import { useAdminAuth } from '../auth/AdminAuthContext.jsx';
 import { AdminOverview } from './AdminOverview.jsx';
@@ -11,9 +11,10 @@ import { CmsTestimonialsPage } from './cms/CmsTestimonialsPage.jsx';
 import { CmsEmailTemplatesPage } from './cms/CmsEmailTemplatesPage.jsx';
 import { CmsTermsPage } from './cms/CmsTermsPage.jsx';
 import { CmsPrivacyPage } from './cms/CmsPrivacyPage.jsx';
+import { ExercisesManagement } from './ExercisesManagement.jsx';
 
 const cmsItems = [
-  { to: '/admin/cms/sections', label: 'Page Sections', icon: FileText },
+  { to: '/admin/cms/sections', label: 'Website Content', icon: FileText },
   { to: '/admin/cms/testimonials', label: 'Testimonials', icon: Star },
   { to: '/admin/cms/email-templates', label: 'Email Templates', icon: Mail },
   { to: '/admin/cms/terms', label: 'Terms & Conditions', icon: ScrollText },
@@ -33,8 +34,8 @@ export function AdminDashboardLayout() {
   });
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-background)' }}>
-      <aside style={{ width: '260px', background: 'var(--color-surface)', borderRight: '1px solid var(--color-border)', padding: '20px 12px', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
         <div style={{ padding: '8px 12px', marginBottom: '24px' }}>
           <div className="gymweek-logo">GYM<span>WEEK</span></div>
           <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>Super Admin Panel</div>
@@ -44,6 +45,7 @@ export function AdminDashboardLayout() {
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <NavLink to="/admin" end style={navStyle}><LayoutDashboard size={16} /> Overview</NavLink>
           <NavLink to="/admin/users" style={navStyle}><Users size={16} /> Users</NavLink>
+          <NavLink to="/admin/exercises" style={navStyle}><Dumbbell size={16} /> Exercises</NavLink>
           <NavLink to="/admin/contacts" style={navStyle}><MessageSquare size={16} /> Contacts</NavLink>
           <NavLink to="/admin/themes" style={navStyle}><Palette size={16} /> Themes</NavLink>
 
@@ -67,10 +69,11 @@ export function AdminDashboardLayout() {
         </button>
       </aside>
 
-      <main style={{ flex: 1, overflow: 'auto', padding: '32px' }}>
+      <main className="admin-main">
         <Routes>
           <Route index element={<AdminOverview />} />
           <Route path="users" element={<UsersManagement />} />
+          <Route path="exercises" element={<ExercisesManagement />} />
           <Route path="contacts" element={<ContactsManagement />} />
           <Route path="themes" element={<ThemeSettings />} />
           <Route path="cms/sections" element={<CmsSectionsPage />} />

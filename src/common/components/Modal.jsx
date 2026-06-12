@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export function Modal({ open, onClose, title, children, size = 'md' }) {
+export function Modal({ open, onClose, title, children, size = 'md', backdrop = 'dark' }) {
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
@@ -19,7 +19,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="modal-overlay"
+          className={`modal-overlay${backdrop === 'blue' ? ' modal-overlay--blue' : ''}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

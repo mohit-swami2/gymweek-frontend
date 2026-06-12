@@ -1,19 +1,17 @@
 import { StatusBadge } from './StatusBadge.jsx';
 
-export function DataTable({ columns, data, onRowClick, emptyMessage = 'No records found' }) {
+export function DataTable({ columns, data, onRowClick, emptyMessage = 'No records found', compact = false }) {
   if (!data?.length) {
-    return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>{emptyMessage}</div>;
+    return <div className="data-table-empty">{emptyMessage}</div>;
   }
 
   return (
-    <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+    <div className={`data-table-wrap${compact ? ' data-table-wrap--compact' : ''}`}>
+      <table className="data-table">
         <thead>
-          <tr style={{ background: 'var(--color-secondary)' }}>
+          <tr>
             {columns.map((col) => (
-              <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-border)' }}>
-                {col.label}
-              </th>
+              <th key={col.key}>{col.label}</th>
             ))}
           </tr>
         </thead>
@@ -22,12 +20,10 @@ export function DataTable({ columns, data, onRowClick, emptyMessage = 'No record
             <tr
               key={row._id || i}
               onClick={() => onRowClick?.(row)}
-              style={{ cursor: onRowClick ? 'pointer' : 'default', borderBottom: '1px solid var(--color-border)' }}
-              onMouseEnter={(e) => { if (onRowClick) e.currentTarget.style.background = 'var(--color-secondary)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              className={onRowClick ? 'data-table__row--clickable' : undefined}
             >
               {columns.map((col) => (
-                <td key={col.key} style={{ padding: '12px 16px' }}>
+                <td key={col.key}>
                   {col.key === 'status' && !col.render ? <StatusBadge status={row.status} /> : col.render ? col.render(row) : row[col.key]}
                 </td>
               ))}

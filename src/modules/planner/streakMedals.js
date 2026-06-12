@@ -1,9 +1,9 @@
 export const STREAK_MEDALS = [
-  { min: 0, name: 'Rookie', tier: 'none', emoji: '🏅', color: '#6b6b6b' },
-  { min: 3, name: 'Committed', tier: 'bronze', emoji: '🥉', color: '#cd7f32' },
-  { min: 7, name: 'Warrior', tier: 'silver', emoji: '🥈', color: '#c0c0c0' },
-  { min: 30, name: 'Champion', tier: 'gold', emoji: '🥇', color: '#ffd700' },
-  { min: 100, name: 'Legend', tier: 'platinum', emoji: '💎', color: '#a78bfa' },
+  { min: 0, name: 'Rookie', tier: 'none', color: '#6b7280', accent: '#9ca3af' },
+  { min: 3, name: 'Committed', tier: 'bronze', color: '#b87333', accent: '#e8a85c' },
+  { min: 7, name: 'Warrior', tier: 'silver', color: '#a8b4c4', accent: '#e8eef5' },
+  { min: 30, name: 'Conqueror', tier: 'gold', color: '#f5c518', accent: '#fff4b0' },
+  { min: 100, name: 'Legend', tier: 'legend', color: '#a78bfa', accent: '#e9d5ff' },
 ];
 
 export function getCurrentMedal(streak) {

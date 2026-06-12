@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Flame, Trophy, Timer, Play, CheckCircle2, Circle, Zap, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
@@ -9,6 +10,7 @@ import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { getSplitLabel } from '../planner/splitTemplates.js';
 import { STREAK_MEDALS, getCurrentMedal, getNextMedal } from '../planner/streakMedals.js';
+import { StreakMedalBadge } from '../planner/StreakMedalBadge.jsx';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -21,6 +23,7 @@ export function DashboardView() {
   const [streakInfo, setStreakInfo] = useState(null);
   const [volumeData, setVolumeData] = useState([]);
   const [todaySession, setTodaySession] = useState(null);
+  const [sessionSummary, setSessionSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkInModal, setCheckInModal] = useState(null);
 
@@ -29,12 +32,14 @@ export function DashboardView() {
     fitnessApi.getCurrentPlan(),
     fitnessApi.getVolumeProgress({ range: '4w', groupBy: 'week' }),
     fitnessApi.getTodaySession(),
+    fitnessApi.getTodaySessionSummary(),
     fitnessApi.getStreak(),
-  ]).then(([sumRes, planRes, volRes, sessionRes, streakRes]) => {
+  ]).then(([sumRes, planRes, volRes, sessionRes, summaryRes, streakRes]) => {
     setSummary(sumRes.data[0]);
     setPlan(planRes.data[0]);
     setVolumeData(volRes.data[0]?.data || []);
     setTodaySession(sessionRes.data[0] || null);
+    setSessionSummary(summaryRes.data[0] || null);
     setStreakInfo(streakRes.data[0]);
   });
 
@@ -68,14 +73,26 @@ export function DashboardView() {
 
   const handleStartWorkout = async () => {
     try {
+      if (todaySession?.status === 'inProgress') {
+        navigate('/log', { state: { session: todaySession } });
+        return;
+      }
       const today = new Date();
       const dayIndex = today.getDay();
       const dayOfWeek = DAY_KEYS[dayIndex === 0 ? 6 : dayIndex - 1];
       const res = await fitnessApi.startSession({ planId: plan?._id, dayOfWeek });
+      await loadData();
       navigate('/log', { state: { session: res.data[0] } });
     } catch (err) {
       toast.error(err.message);
     }
+  };
+
+  const workoutButtonLabel = () => {
+    if (todaySession?.status === 'inProgress') return 'CONTINUE WORKOUT';
+    const completed = sessionSummary?.completedCount || 0;
+    if (completed > 0) return `SESSION ${completed + 1}`;
+    return 'START WORKOUT';
   };
 
   if (loading) return <div style={{ padding: '24px' }}>Loading dashboard...</div>;
@@ -150,35 +167,51 @@ export function DashboardView() {
             color: '#080808', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer',
           }}>
             <Play size={14} fill="#080808" />
-            {todaySession ? 'CONTINUE WORKOUT' : 'START WORKOUT'}
+            {workoutButtonLabel()}
           </button>
         </div>
       </div>
 
       <div className="card medals-section">
         <div className="medals-section__head">
-          <h3>Streak Medals</h3>
-          <span>Based on your check-in streak</span>
+          <div>
+            <h3>Streak Awards</h3>
+            <span className="medals-section__streak">{currentStreak} day streak · {currentMedal.name}</span>
+          </div>
+          <div className="medals-section__current">
+            <StreakMedalBadge tier={currentMedal.tier} earned size="sm" />
+          </div>
         </div>
         <div className="medals-section__grid">
-          {STREAK_MEDALS.filter((m) => m.min > 0).map((medal) => {
+          {STREAK_MEDALS.filter((m) => m.min > 0).map((medal, i) => {
             const earned = currentStreak >= medal.min;
             const isCurrent = currentMedal.min === medal.min;
             return (
-              <div
+              <motion.div
                 key={medal.min}
-                className={`medal-card${earned ? ' medal-card--earned' : ''}${isCurrent ? ' medal-card--active' : ''}`}
+                className={`medal-card medal-card--${medal.tier}${earned ? ' medal-card--earned' : ''}${isCurrent ? ' medal-card--active' : ''}`}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.4 }}
               >
-                <span className="medal-card__emoji">{medal.emoji}</span>
-                <strong>{medal.name}</strong>
-                <span>{medal.min}+ days</span>
-              </div>
+                <StreakMedalBadge tier={medal.tier} earned={earned} active={isCurrent} size="lg" />
+                <strong className="medal-card__name">{medal.name}</strong>
+                <span className="medal-card__days">{medal.min}+ days</span>
+                {isCurrent && <span className="medal-card__badge">Current</span>}
+              </motion.div>
             );
           })}
         </div>
         {nextMedal && (
           <p className="medals-section__next">
-            {nextMedal.min - currentStreak} more day{nextMedal.min - currentStreak === 1 ? '' : 's'} to unlock <strong>{nextMedal.emoji} {nextMedal.name}</strong>
+            <span className="medals-section__next-bar">
+              <span
+                className="medals-section__next-fill"
+                style={{ width: `${Math.min(100, (currentStreak / nextMedal.min) * 100)}%` }}
+              />
+            </span>
+            {nextMedal.min - currentStreak} more day{nextMedal.min - currentStreak === 1 ? '' : 's'} to unlock{' '}
+            <strong>{nextMedal.name}</strong>
           </p>
         )}
       </div>

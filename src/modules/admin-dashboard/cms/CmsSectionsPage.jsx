@@ -1,93 +1,256 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ExternalLink, Code2, Layout, Eye } from 'lucide-react';
+import { Modal } from '../../../common/components/Modal.jsx';
 import { toast } from 'sonner';
-import { sectionsApi } from '../../../common/api/cmsApi.js';
-import { DataTable } from '../../../common/components/DataTable.jsx';
-import { Pagination } from '../../../common/components/Pagination.jsx';
-import { PreviewPanel } from '../../../common/components/PreviewPanel.jsx';
-import { HeroSection } from '../../website/HeroSection.jsx';
-import { AboutSection } from '../../website/AboutSection.jsx';
+import { sectionsApi, testimonialsApi } from '../../../common/api/cmsApi.js';
+import { CmsSectionEditor } from '../../cms/CmsSectionEditor.jsx';
+import { SectionPreview } from '../../cms/SectionPreview.jsx';
+import {
+  CMS_PAGES,
+  SECTION_DEFINITIONS,
+  sectionFromForm,
+  formFromSection,
+} from '../../cms/sectionRegistry.js';
+import { invalidateCmsCache } from '../../website/hooks/useWebsiteCms.js';
+import '../../website/landing.css';
 
 export function CmsSectionsPage() {
   const [items, setItems] = useState([]);
-  const [meta, setMeta] = useState({});
-  const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ title: '', subtitle: '', content: '{}', status: 'published' });
+  const [testimonials, setTestimonials] = useState([]);
+  const [selectedKey, setSelectedKey] = useState(null);
+  const [form, setForm] = useState(formFromSection(null));
+  const [showJson, setShowJson] = useState(false);
+  const [pageFilter, setPageFilter] = useState('all');
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const fetchItems = useCallback(async () => {
     try {
-      const res = await sectionsApi.list({ page, limit: 10 });
-      setItems(res.data);
-      setMeta(res.meta);
+      const res = await sectionsApi.list({ page: 1, limit: 100 });
+      setItems(res.data || []);
     } catch (err) {
       toast.error(err.message);
     }
-  }, [page]);
+  }, []);
 
-  useEffect(() => { fetchItems(); }, [fetchItems]);
+  const fetchTestimonials = useCallback(async () => {
+    try {
+      const res = await testimonialsApi.list({ page: 1, limit: 20, status: 'published' });
+      setTestimonials(res.data || []);
+    } catch {
+      setTestimonials([]);
+    }
+  }, []);
 
-  const selectRow = (row) => {
-    setSelected(row);
-    setForm({ title: row.title, subtitle: row.subtitle || '', content: JSON.stringify(row.content, null, 2), status: row.status });
+  useEffect(() => {
+    fetchItems();
+    fetchTestimonials();
+  }, [fetchItems, fetchTestimonials]);
+
+  const selectSection = (row) => {
+    const def = SECTION_DEFINITIONS[row.sectionKey];
+    if (def?.managedElsewhere) return;
+    setSelectedKey(row.sectionKey);
+    setForm(formFromSection(row));
+    setShowJson(false);
   };
 
   const handleSave = async () => {
-    if (!selected) return;
+    if (!selectedKey) return;
     try {
-      let content;
-      try { content = JSON.parse(form.content); } catch { toast.error('Invalid JSON'); return; }
-      await sectionsApi.upsertByKey(selected.sectionKey, { title: form.title, subtitle: form.subtitle, content, status: form.status, isActive: true });
-      toast.success('Section updated');
+      let payload = sectionFromForm(form);
+      if (showJson && typeof form.content === 'string') {
+        payload.content = JSON.parse(form.content);
+      }
+      await sectionsApi.upsertByKey(selectedKey, payload);
+      invalidateCmsCache();
+      toast.success('Section saved — changes are live on the website');
       fetchItems();
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || 'Failed to save');
     }
   };
 
-  let previewContent;
-  try {
-    const content = JSON.parse(form.content);
-    if (selected?.sectionKey === 'hero_section') previewContent = <HeroSection section={{ ...selected, title: form.title, subtitle: form.subtitle, content }} />;
-    else if (selected?.sectionKey === 'about_us') previewContent = <AboutSection section={{ title: form.title, subtitle: form.subtitle, content }} />;
-    else previewContent = <pre style={{ padding: '16px', fontSize: '0.8rem' }}>{JSON.stringify(content, null, 2)}</pre>;
-  } catch {
-    previewContent = <p style={{ padding: '16px', color: 'var(--color-text-muted)' }}>Invalid JSON</p>;
-  }
+  const groupedSections = useMemo(() => {
+    const map = {};
+    CMS_PAGES.forEach((page) => {
+      map[page.id] = { ...page, rows: [] };
+    });
+    items.forEach((item) => {
+      const def = SECTION_DEFINITIONS[item.sectionKey];
+      const pageId = def?.page || 'other';
+      if (!map[pageId]) map[pageId] = { id: pageId, label: 'Other', rows: [] };
+      map[pageId].rows.push(item);
+    });
+    return Object.values(map).filter((p) => p.rows.length > 0 || p.sections?.length);
+  }, [items]);
+
+  const filteredPages = pageFilter === 'all'
+    ? groupedSections
+    : groupedSections.filter((p) => p.id === pageFilter);
+
+  const previewContent = selectedKey ? (
+    <SectionPreview sectionKey={selectedKey} form={form} testimonials={testimonials} />
+  ) : null;
 
   return (
-    <div>
-      <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '1.75rem', marginBottom: '24px' }}>Page Sections</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        <div>
-          <DataTable
-            columns={[
-              { key: 'sectionKey', label: 'Key' },
-              { key: 'title', label: 'Title' },
-              { key: 'status', label: 'Status' },
-            ]}
-            data={items}
-            onRowClick={selectRow}
-          />
-          <Pagination meta={meta} onPageChange={setPage} />
+    <div className="admin-page-root">
+      <div className="admin-page cms-sections-page">
+        <div className="admin-page__header">
+          <div>
+            <h1 className="admin-page__title">Website Content</h1>
+            <p className="cms-sections-page__desc">
+              Control all public page text. Each card maps a page to its editable CMS sections.
+            </p>
+          </div>
         </div>
-        <div>
-          {selected && (
-            <div className="card" style={{ marginBottom: '16px' }}>
-              <h3 style={{ marginBottom: '16px' }}>Edit: {selected.sectionKey}</h3>
-              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" style={{ marginBottom: '10px' }} />
-              <input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} placeholder="Subtitle" style={{ marginBottom: '10px' }} />
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={{ marginBottom: '10px' }}>
-                <option value="draft">draft</option>
-                <option value="published">published</option>
-                <option value="archived">archived</option>
-              </select>
-              <textarea rows={10} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} style={{ fontFamily: 'monospace', fontSize: '0.8rem' }} />
-              <button type="button" className="btn-primary" onClick={handleSave} style={{ marginTop: '12px' }}>Save & Preview</button>
+
+        <div className="admin-page__body cms-sections-page__body">
+          <div className="cms-sections-page__map">
+            {CMS_PAGES.map((page) => (
+              <div key={page.id} className="card cms-sections-page__map-card">
+                <div className="cms-sections-page__map-card-head">
+                  <div>
+                    <div className="cms-sections-page__map-title">{page.label}</div>
+                    <div className="cms-sections-page__map-path">{page.path}</div>
+                  </div>
+                  {page.path.startsWith('/') && page.path !== '—' && (
+                    <a href={page.path} target="_blank" rel="noreferrer" className="cms-sections-page__ext">
+                      <ExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
+                {page.managedElsewhere ? (
+                  <div className="cms-sections-page__links">
+                    {Object.entries(page.adminRoutes || {}).map(([key, route]) => (
+                      <Link key={key} to={route}>
+                        → {key === '_items' ? 'Manage items' : SECTION_DEFINITIONS[key]?.label || key}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <ul className="cms-sections-page__section-list">
+                    {page.sections.map((key) => (
+                      <li key={key}>
+                        <button
+                          type="button"
+                          className={selectedKey === key ? 'cms-sections-page__section-btn--active' : ''}
+                          onClick={() => {
+                            const row = items.find((i) => i.sectionKey === key);
+                            if (row) selectSection(row);
+                            setPageFilter(page.id);
+                          }}
+                        >
+                          {SECTION_DEFINITIONS[key]?.label || key}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="cms-sections-page__filters">
+            <button type="button" className={pageFilter === 'all' ? 'btn-primary' : 'btn-secondary'} onClick={() => setPageFilter('all')}>
+              All sections
+            </button>
+            {CMS_PAGES.filter((p) => !p.managedElsewhere).map((p) => (
+              <button key={p.id} type="button" className={pageFilter === p.id ? 'btn-primary' : 'btn-secondary'} onClick={() => setPageFilter(p.id)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="cms-sections-page__workspace">
+            <div className="card cms-sections-page__sidebar">
+              {filteredPages.map((page) => (
+                <div key={page.id}>
+                  <div className="cms-sections-page__sidebar-group">{page.label}</div>
+                  {page.rows.map((row) => {
+                    const def = SECTION_DEFINITIONS[row.sectionKey];
+                    return (
+                      <button
+                        key={row.sectionKey}
+                        type="button"
+                        className={`cms-sections-page__sidebar-item${selectedKey === row.sectionKey ? ' cms-sections-page__sidebar-item--active' : ''}`}
+                        onClick={() => selectSection(row)}
+                      >
+                        <div className="cms-sections-page__sidebar-label">{def?.label || row.sectionKey}</div>
+                        <div className="cms-sections-page__sidebar-meta">{row.sectionKey} · {row.status}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
-          )}
-          <PreviewPanel title="Website Section Preview" panel="website">{previewContent || <p style={{ padding: '16px' }}>Select a section</p>}</PreviewPanel>
+
+            <div className="cms-sections-page__editor">
+              {selectedKey ? (
+                <div className="card cms-sections-page__editor-card">
+                  <div className="cms-sections-page__editor-head">
+                    <div>
+                      <h3>{SECTION_DEFINITIONS[selectedKey]?.label || selectedKey}</h3>
+                      <code>{selectedKey}</code>
+                    </div>
+                    <div className="cms-sections-page__editor-modes">
+                      <button type="button" className={showJson ? 'btn-secondary' : 'btn-icon'} onClick={() => setShowJson(false)} title="Visual editor">
+                        <Layout size={14} /> Visual
+                      </button>
+                      <button type="button" className={showJson ? 'btn-icon' : 'btn-secondary'} onClick={() => setShowJson(true)} title="JSON editor">
+                        <Code2 size={14} /> JSON
+                      </button>
+                    </div>
+                  </div>
+
+                  <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="cms-sections-page__status">
+                    <option value="draft">draft</option>
+                    <option value="published">published</option>
+                    <option value="archived">archived</option>
+                  </select>
+
+                  <CmsSectionEditor sectionKey={selectedKey} form={form} onChange={setForm} showJson={showJson} />
+
+                  <div className="admin-form__actions">
+                    <button type="button" className="btn-primary" onClick={handleSave}>
+                      Save & Publish
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => setShowPreviewModal(true)}
+                    >
+                      <Eye size={14} style={{ marginRight: 6 }} />
+                      Preview
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="card cms-sections-page__empty">
+                  Select a section from the page map or sidebar to edit its content.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      <Modal
+        open={showPreviewModal && !!selectedKey}
+        onClose={() => setShowPreviewModal(false)}
+        title={`Preview — ${SECTION_DEFINITIONS[selectedKey]?.label || selectedKey || ''}`}
+        size="xl"
+        backdrop="blue"
+      >
+        <p className="admin-preview-hint">
+          Live preview of your current editor values (unsaved changes included).
+        </p>
+        <div className="cms-preview-modal__frame">
+          <div className="cms-preview-modal__viewport">
+            {previewContent}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 const cards = [
   { title: 'Users', desc: 'CRUD, restrict, one-click impersonation', to: '/admin/users' },
+  { title: 'Exercises', desc: 'Exercise library with images and instructions', to: '/admin/exercises' },
   { title: 'Contacts', desc: 'Lead inquiries with status tracking', to: '/admin/contacts' },
   { title: 'Themes', desc: 'White-label branding with live preview', to: '/admin/themes' },
   { title: 'CMS', desc: 'Sections, testimonials, emails, legal pages', to: '/admin/cms/sections' },

@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext.jsx';
 import { AuthLayout } from './AuthLayout.jsx';
+import { useAuthCms } from './useAuthCms.js';
 
 export function LoginPage() {
+  const { section, content } = useAuthCms('auth_login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,21 +28,25 @@ export function LoginPage() {
   };
 
   return (
-    <AuthLayout title="Sign In" subtitle="Access your GymWeek workspace">
+    <AuthLayout title={section?.title || 'Sign In'} subtitle={section?.subtitle || 'Access your GymWeek workspace'}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
+        <input type="email" placeholder={content.emailPlaceholder || 'Email'} value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input type="password" placeholder={content.passwordPlaceholder || 'Password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <button type="submit" className="btn-primary" disabled={loading}>
+          {loading ? (content.submitLoading || 'Signing in...') : (content.submitLabel || 'Sign In')}
+        </button>
       </form>
       <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--muted-foreground)', textAlign: 'center' }}>
-        <Link to="/auth/forgot-password">Forgot password?</Link> · <Link to="/auth/register">Create account</Link>
+        <Link to="/auth/forgot-password">{content.forgotLink || 'Forgot password?'}</Link>
+        {' · '}
+        <Link to="/auth/register">{content.registerLink || 'Create account'}</Link>
       </p>
       <Link
         to="/admin/login"
         className="btn-secondary"
         style={{ display: 'block', marginTop: '16px', textAlign: 'center', textDecoration: 'none', padding: '12px' }}
       >
-        Login as Admin
+        {content.adminLink || 'Login as Admin'}
       </Link>
     </AuthLayout>
   );

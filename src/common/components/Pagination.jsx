@@ -1,13 +1,22 @@
 export function Pagination({ meta, onPageChange }) {
-  if (!meta?.totalPages || meta.totalPages <= 1) return null;
+  if (meta?.total == null) return null;
+
+  const page = meta.page || 1;
+  const totalPages = meta.totalPages || 1;
+  const showNav = totalPages > 1;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-      <span>{meta.total} records · Page {meta.page} of {meta.totalPages}</span>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button type="button" className="btn-icon" disabled={meta.page <= 1} onClick={() => onPageChange(meta.page - 1)}>Prev</button>
-        <button type="button" className="btn-icon" disabled={meta.page >= meta.totalPages} onClick={() => onPageChange(meta.page + 1)}>Next</button>
-      </div>
+    <div className="admin-pagination">
+      <span>
+        {meta.total} record{meta.total === 1 ? '' : 's'}
+        {showNav ? ` · Page ${page} of ${totalPages}` : ''}
+      </span>
+      {showNav && (
+        <div className="admin-pagination__nav">
+          <button type="button" className="btn-icon" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>Prev</button>
+          <button type="button" className="btn-icon" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>Next</button>
+        </div>
+      )}
     </div>
   );
 }

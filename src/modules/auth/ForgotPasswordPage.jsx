@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { websiteApi } from '../../common/api/client.js';
 import { AuthLayout } from './AuthLayout.jsx';
+import { useAuthCms } from './useAuthCms.js';
 
 export function ForgotPasswordPage() {
+  const { section, content } = useAuthCms('auth_forgot_password');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -22,13 +24,15 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout title="Reset Password" subtitle="We'll send you a recovery link">
+    <AuthLayout title={section?.title || 'Reset Password'} subtitle={section?.subtitle || "We'll send you a recovery link"}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
-        <button type="submit" disabled={loading} style={btnStyle}>{loading ? 'Sending...' : 'Send Reset Link'}</button>
+        <input type="email" placeholder={content.emailPlaceholder || 'Email'} value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
+        <button type="submit" disabled={loading} style={btnStyle}>
+          {loading ? (content.submitLoading || 'Sending...') : (content.submitLabel || 'Send Reset Link')}
+        </button>
       </form>
       <p style={{ marginTop: '16px', fontSize: '0.875rem', textAlign: 'center' }}>
-        <Link to="/auth/login">Back to login</Link>
+        <Link to="/auth/login">{content.backLink || 'Back to login'}</Link>
       </p>
     </AuthLayout>
   );

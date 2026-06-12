@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, Eye, Pencil, Trash2 } from 'lucide-react';
 import { DataTable } from './DataTable.jsx';
-import { Pagination } from './Pagination.jsx';
-import { PreviewPanel, HtmlPreview } from './PreviewPanel.jsx';
+import { Modal } from './Modal.jsx';
+import { AdminPageShell } from '../../modules/admin-dashboard/AdminPageShell.jsx';
+import { HtmlPreview } from './PreviewPanel.jsx';
 import { StatusBadge } from './StatusBadge.jsx';
 
 export function CmsCrudPage({
@@ -22,8 +23,8 @@ export function CmsCrudPage({
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-  const [showPreview, setShowPreview] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -43,13 +44,19 @@ export function CmsCrudPage({
   const openCreate = () => {
     setEditing(null);
     setForm(emptyForm);
-    setShowForm(true);
+    setModalOpen(true);
   };
 
   const openEdit = (row) => {
     setEditing(row);
     setForm({ ...row });
-    setShowForm(true);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditing(null);
+    setForm(emptyForm);
   };
 
   const handleSave = async () => {
@@ -61,7 +68,7 @@ export function CmsCrudPage({
         await api.create(form);
         toast.success('Created');
       }
-      setShowForm(false);
+      closeModal();
       fetchItems();
     } catch (err) {
       toast.error(err.message);
@@ -79,77 +86,139 @@ export function CmsCrudPage({
     }
   };
 
-  const actionCol = {
-    key: 'actions',
-    label: 'Actions',
-    render: (row) => (
-      <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="btn-icon" onClick={() => openEdit(row)}><Pencil size={12} /> Edit</button>
-        <button type="button" className="btn-danger" onClick={() => handleDelete(row)}><Trash2 size={12} /></button>
-      </div>
-    ),
+  const openPreview = (row) => {
+    if (row) {
+      setForm({ ...row });
+    }
+    setPreviewOpen(true);
   };
 
   const previewContent = renderPreview
     ? renderPreview(form)
     : previewType === 'html'
       ? <HtmlPreview html={form.content} />
-      : <pre style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>{JSON.stringify(form, null, 2)}</pre>;
+      : <pre className="admin-preview-json">{JSON.stringify(form, null, 2)}</pre>;
+
+  const actionCol = {
+    key: 'actions',
+    label: 'Actions',
+    render: (row) => (
+      <div className="admin-table-actions" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="btn-icon" onClick={() => openPreview(row)} title="Preview">
+          <Eye size={12} />
+        </button>
+        <button type="button" className="btn-icon" onClick={() => openEdit(row)} title="Edit">
+          <Pencil size={12} />
+        </button>
+        <button type="button" className="btn-danger" onClick={() => handleDelete(row)} title="Delete">
+          <Trash2 size={12} />
+        </button>
+      </div>
+    ),
+  };
+
+  const filters = (
+    <div className="users-filters-grid users-filters-grid--wide">
+      <div className="users-filters-grid__search">
+        <label htmlFor={`${title}-search`}>Search</label>
+        <input
+          id={`${title}-search`}
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && fetchItems()}
+        />
+      </div>
+      <div className="users-filters-grid__action">
+        <label aria-hidden="true">&nbsp;</label>
+        <button type="button" className="btn-secondary" onClick={() => { setPage(1); fetchItems(); }} style={{ width: '100%' }}>
+          Apply
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '1.75rem' }}>{title}</h1>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button type="button" className="btn-secondary" onClick={() => setShowPreview(!showPreview)}>
-            <Eye size={14} style={{ marginRight: 4 }} /> {showPreview ? 'Hide' : 'Show'} Preview
+    <div className="admin-page-root">
+      <AdminPageShell
+        title={title}
+        actions={(
+          <button type="button" className="btn-primary" onClick={openCreate}>
+            <Plus size={14} style={{ marginRight: 4 }} />
+            Add New
           </button>
-          <button type="button" className="btn-primary" onClick={openCreate}><Plus size={14} style={{ marginRight: 4 }} /> Add New</button>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: showPreview ? '1fr 1fr' : '1fr', gap: '24px' }}>
-        <div>
-          <input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchItems()} style={{ marginBottom: '16px' }} />
-          {loading ? <p>Loading...</p> : (
-            <>
-              <DataTable columns={[...columns, actionCol]} data={items} onRowClick={openEdit} />
-              <Pagination meta={meta} onPageChange={setPage} />
-            </>
-          )}
-        </div>
-
-        {showPreview && (
-          <div>
-            {showForm ? (
-              <div className="card" style={{ marginBottom: '16px' }}>
-                <h3 style={{ marginBottom: '16px', fontWeight: 700 }}>{editing ? 'Edit' : 'Create'}</h3>
-                {formFields.map((field) => (
-                  <div key={field.name} style={{ marginBottom: '12px' }}>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>{field.label}</label>
-                    {field.type === 'textarea' ? (
-                      <textarea rows={field.rows || 6} value={form[field.name] || ''} onChange={(e) => setForm({ ...form, [field.name]: e.target.value })} />
-                    ) : field.type === 'select' ? (
-                      <select value={form[field.name] || ''} onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}>
-                        {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    ) : (
-                      <input type={field.type || 'text'} value={form[field.name] || ''} onChange={(e) => setForm({ ...form, [field.name]: field.type === 'number' ? +e.target.value : e.target.value })} />
-                    )}
-                  </div>
-                ))}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                  <button type="button" className="btn-primary" onClick={handleSave}>Save</button>
-                  <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-                </div>
-              </div>
-            ) : null}
-            <PreviewPanel title={`${title} Preview`}>
-              {previewContent}
-            </PreviewPanel>
-          </div>
         )}
-      </div>
+        filters={filters}
+        loading={loading}
+        meta={meta}
+        onPageChange={setPage}
+      >
+        <DataTable columns={[...columns, actionCol]} data={items} onRowClick={openEdit} compact />
+      </AdminPageShell>
+
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editing ? `Edit — ${title}` : `Create — ${title}`}
+        size="lg"
+        backdrop="blue"
+      >
+        <div className="admin-form">
+          {formFields.map((field) => (
+            <div key={field.name} className="admin-form__field">
+              <label htmlFor={`cms-${field.name}`}>{field.label}</label>
+              {field.type === 'textarea' ? (
+                <textarea
+                  id={`cms-${field.name}`}
+                  rows={field.rows || 6}
+                  value={form[field.name] || ''}
+                  onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
+                />
+              ) : field.type === 'select' ? (
+                <select
+                  id={`cms-${field.name}`}
+                  value={form[field.name] || ''}
+                  onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
+                >
+                  {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                </select>
+              ) : (
+                <input
+                  id={`cms-${field.name}`}
+                  type={field.type || 'text'}
+                  value={form[field.name] || ''}
+                  onChange={(e) => setForm({
+                    ...form,
+                    [field.name]: field.type === 'number' ? +e.target.value : e.target.value,
+                  })}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="admin-form__actions">
+          <button type="button" className="btn-secondary" onClick={() => setPreviewOpen(true)}>
+            <Eye size={14} style={{ marginRight: 4 }} />
+            Preview
+          </button>
+          <div style={{ flex: 1 }} />
+          <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={handleSave}>Save</button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={`${title} Preview`}
+        size="xl"
+        backdrop="blue"
+      >
+        <p className="admin-preview-hint">Live preview of the current content.</p>
+        <div className="cms-preview-modal__frame cms-preview-modal__frame--document">
+          {previewContent}
+        </div>
+      </Modal>
     </div>
   );
 }
