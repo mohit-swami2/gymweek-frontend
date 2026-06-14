@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useAuth } from './AuthContext.jsx';
 import { AuthLayout } from './AuthLayout.jsx';
 import { useAuthCms } from './useAuthCms.js';
+import { PasswordInput } from '../../common/components/PasswordInput.jsx';
 
 export function LoginPage() {
   const { section, content } = useAuthCms('auth_login');
@@ -31,7 +32,7 @@ export function LoginPage() {
     <AuthLayout title={section?.title || 'Sign In'} subtitle={section?.subtitle || 'Access your GymWeek workspace'}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <input type="email" placeholder={content.emailPlaceholder || 'Email'} value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder={content.passwordPlaceholder || 'Password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <PasswordInput placeholder={content.passwordPlaceholder || 'Password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? (content.submitLoading || 'Signing in...') : (content.submitLabel || 'Sign In')}
         </button>

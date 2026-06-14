@@ -776,7 +776,7 @@ html.gw-public-site body {
   position: relative;
   min-height: calc(100vh - 88px);
   min-height: calc(100dvh - 88px);
-  padding: 128px 24px 80px;
+  padding: 280px 24px 80px;
   overflow: hidden;
 }
 

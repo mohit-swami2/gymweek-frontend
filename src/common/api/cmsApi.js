@@ -1,4 +1,5 @@
 import { adminApi } from './client.js';
+import { API_BASE_URL } from '../../config/api.js';
 
 const crud = (basePath) => ({
   list: (params) => adminApi.get(basePath, { params }),
@@ -25,12 +26,17 @@ export const exercisesApi = {
   getMuscleGroups: () => adminApi.get('/exercises/muscle-groups'),
 };
 
+export const dashboardApi = {
+  getStats: () => adminApi.get('/dashboard/stats'),
+  exportReport: () => adminApi.get('/dashboard/export'),
+};
+
 export const uploadAdminFile = async (file, folder = 'admin') => {
   const form = new FormData();
   form.append('file', file);
   form.append('folder', folder);
   const token = localStorage.getItem('gymweek_admin_token');
-  const base = import.meta.env.VITE_API_URL || '';
+  const base = API_BASE_URL;
   const res = await fetch(`${base}/api/admin/upload`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},

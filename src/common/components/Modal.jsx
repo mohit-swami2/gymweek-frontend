@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export function Modal({ open, onClose, title, children, size = 'md', backdrop = 'dark' }) {
+export function Modal({ open, onClose, title, children, footer, size = 'md', backdrop = 'dark', scrollBody = false }) {
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
@@ -26,7 +26,7 @@ export function Modal({ open, onClose, title, children, size = 'md', backdrop = 
           onClick={onClose}
         >
           <motion.div
-            className={`modal modal--${size}`}
+            className={`modal modal--${size}${scrollBody ? ' modal--scroll' : ''}`}
             initial={{ opacity: 0, scale: 0.92, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -43,7 +43,8 @@ export function Modal({ open, onClose, title, children, size = 'md', backdrop = 
                 )}
               </div>
             )}
-            <div className="modal__body">{children}</div>
+            <div className={`modal__body${scrollBody ? ' modal__body--scroll' : ''}`}>{children}</div>
+            {footer && <div className="modal__footer">{footer}</div>}
           </motion.div>
         </motion.div>
       )}

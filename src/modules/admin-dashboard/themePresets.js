@@ -1,0 +1,46 @@
+const preset = (id, name, colors, fontStyle = 'Barlow', themeMode = 'dark') => ({
+  id,
+  name,
+  fontStyle,
+  themeMode,
+  colors,
+});
+
+export const THEME_PRESETS = {
+  website: [
+    preset('web-sage', 'Sage Studio', { primary: '#7eb09a', secondary: '#111520', background: '#0a0c12', surface: '#141820', accent: '#9b8ec4' }, 'Inter'),
+    preset('web-ocean', 'Ocean Breeze', { primary: '#38bdf8', secondary: '#0f172a', background: '#020617', surface: '#0f172a', accent: '#22d3ee' }, 'Inter'),
+    preset('web-sunset', 'Sunset Glow', { primary: '#fb923c', secondary: '#1c1917', background: '#0c0a09', surface: '#1c1917', accent: '#f472b6' }, 'Poppins'),
+    preset('web-forest', 'Forest Mint', { primary: '#34d399', secondary: '#14532d', background: '#052e16', surface: '#14532d', accent: '#a3e635' }, 'Inter'),
+    preset('web-royal', 'Royal Violet', { primary: '#a78bfa', secondary: '#1e1b4b', background: '#0f0a1a', surface: '#1e1b4b', accent: '#f0abfc' }, 'Poppins'),
+    preset('web-coral', 'Coral Reef', { primary: '#f97316', secondary: '#431407', background: '#1a0f0a', surface: '#292524', accent: '#ef4444' }, 'Roboto'),
+    preset('web-arctic', 'Arctic Light', { primary: '#0ea5e9', secondary: '#e2e8f0', background: '#f8fafc', surface: '#ffffff', accent: '#6366f1' }, 'Inter', 'light'),
+    preset('web-gold', 'Gold Standard', { primary: '#eab308', secondary: '#27272a', background: '#09090b', surface: '#18181b', accent: '#f59e0b' }, 'Barlow'),
+    preset('web-rose', 'Rose Garden', { primary: '#fb7185', secondary: '#4c0519', background: '#1a0510', surface: '#27272a', accent: '#e879f9' }, 'Poppins'),
+    preset('web-midnight', 'Midnight Blue', { primary: '#60a5fa', secondary: '#1e3a5f', background: '#0a1628', surface: '#0f2744', accent: '#818cf8' }, 'Inter'),
+  ],
+  user: [
+    preset('user-neon', 'Neon Lime', { primary: '#c8ff00', secondary: '#1a1a1a', background: '#080808', surface: '#111111', accent: '#ff4d00' }),
+    preset('user-cyber', 'Cyber Blue', { primary: '#00d4ff', secondary: '#1a1a2e', background: '#0a0a14', surface: '#12121f', accent: '#ff006e' }, 'Barlow'),
+    preset('user-blood', 'Blood & Iron', { primary: '#ef4444', secondary: '#1f1f1f', background: '#0a0a0a', surface: '#141414', accent: '#f97316' }),
+    preset('user-purple', 'Purple Haze', { primary: '#a855f7', secondary: '#1e1b2e', background: '#0d0b14', surface: '#161320', accent: '#ec4899' }, 'Barlow'),
+    preset('user-emerald', 'Emerald Power', { primary: '#10b981', secondary: '#064e3b', background: '#022c22', surface: '#064e3b', accent: '#34d399' }),
+    preset('user-gold', 'Champion Gold', { primary: '#fbbf24', secondary: '#292524', background: '#0c0a09', surface: '#1c1917', accent: '#f59e0b' }),
+    preset('user-ice', 'Ice Storm', { primary: '#67e8f9', secondary: '#164e63', background: '#083344', surface: '#0e4d6b', accent: '#38bdf8' }),
+    preset('user-sunset', 'Sunset Pump', { primary: '#f97316', secondary: '#292524', background: '#0c0a09', surface: '#1c1917', accent: '#ef4444' }),
+    preset('user-matrix', 'Matrix Green', { primary: '#22c55e', secondary: '#14532d', background: '#052e16', surface: '#0a2e1a', accent: '#84cc16' }),
+    preset('user-royal', 'Royal Flush', { primary: '#818cf8', secondary: '#312e81', background: '#0f0a1a', surface: '#1e1b4b', accent: '#c084fc' }),
+  ],
+  admin: [
+    preset('admin-blue', 'Classic Blue', { primary: '#3b82f6', secondary: '#1e293b', background: '#0f172a', surface: '#1e293b', accent: '#10b981' }, 'Inter'),
+    preset('admin-slate', 'Slate Pro', { primary: '#6366f1', secondary: '#334155', background: '#0f172a', surface: '#1e293b', accent: '#22d3ee' }, 'Inter'),
+    preset('admin-teal', 'Teal Dashboard', { primary: '#14b8a6', secondary: '#134e4a', background: '#042f2e', surface: '#134e4a', accent: '#2dd4bf' }, 'Inter'),
+    preset('admin-amber', 'Amber Ops', { primary: '#f59e0b', secondary: '#292524', background: '#1c1917', surface: '#292524', accent: '#ef4444' }, 'Roboto'),
+    preset('admin-violet', 'Violet Control', { primary: '#8b5cf6', secondary: '#2e1065', background: '#0f0a1a', surface: '#1e1b4b', accent: '#a78bfa' }, 'Inter'),
+    preset('admin-light', 'Light Admin', { primary: '#2563eb', secondary: '#e2e8f0', background: '#f1f5f9', surface: '#ffffff', accent: '#059669' }, 'Inter', 'light'),
+    preset('admin-red', 'Alert Red', { primary: '#ef4444', secondary: '#450a0a', background: '#1a0505', surface: '#292524', accent: '#f97316' }, 'Inter'),
+    preset('admin-green', 'Ops Green', { primary: '#22c55e', secondary: '#14532d', background: '#052e16', surface: '#14532d', accent: '#eab308' }, 'Inter'),
+    preset('admin-pink', 'Modern Pink', { primary: '#ec4899', secondary: '#500724', background: '#1a0510', surface: '#27272a', accent: '#f472b6' }, 'Poppins'),
+    preset('admin-mono', 'Monochrome', { primary: '#e5e7eb', secondary: '#374151', background: '#111827', surface: '#1f2937', accent: '#9ca3af' }, 'Roboto'),
+  ],
+};

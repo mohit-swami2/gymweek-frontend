@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Flame, Trophy, Timer, Play, CheckCircle2, Circle, Zap, AlertTriangle } from 'lucide-react';
+import { Flame, Trophy, Timer, Play, CheckCircle2, Circle, Zap, AlertTriangle, ClipboardList, Download } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { toast } from 'sonner';
 import { ChartCard } from '../../common/components/ChartCard.jsx';
@@ -11,6 +11,10 @@ import { useAuth } from '../auth/AuthContext.jsx';
 import { getSplitLabel } from '../planner/splitTemplates.js';
 import { STREAK_MEDALS, getCurrentMedal, getNextMedal } from '../planner/streakMedals.js';
 import { StreakMedalBadge } from '../planner/StreakMedalBadge.jsx';
+import { StreakAwardModal } from '../planner/StreakAwardModal.jsx';
+import { ExportSheetModal } from '../export/ExportSheetModal.jsx';
+import { SelectWeekModal } from '../workout-logger/SelectWeekModal.jsx';
+import '../planner/streak-award-modal.css';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -26,6 +30,12 @@ export function DashboardView() {
   const [sessionSummary, setSessionSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkInModal, setCheckInModal] = useState(null);
+  const [adherence, setAdherence] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [bulkDraft, setBulkDraft] = useState(null);
+  const [weekModalOpen, setWeekModalOpen] = useState(false);
+  const [weekModalMode, setWeekModalMode] = useState('bulk');
+  const [selectedMedal, setSelectedMedal] = useState(null);
 
   const loadData = () => Promise.all([
     fitnessApi.getSummary(),
@@ -34,13 +44,16 @@ export function DashboardView() {
     fitnessApi.getTodaySession(),
     fitnessApi.getTodaySessionSummary(),
     fitnessApi.getStreak(),
-  ]).then(([sumRes, planRes, volRes, sessionRes, summaryRes, streakRes]) => {
+    fitnessApi.getAdherence({ range: '4w' }),
+  ]).then(([sumRes, planRes, volRes, sessionRes, summaryRes, streakRes, adhRes]) => {
     setSummary(sumRes.data[0]);
     setPlan(planRes.data[0]);
     setVolumeData(volRes.data[0]?.data || []);
     setTodaySession(sessionRes.data[0] || null);
     setSessionSummary(summaryRes.data[0] || null);
     setStreakInfo(streakRes.data[0]);
+    setAdherence(adhRes.data[0]);
+    setBulkDraft(summaryRes.data[0]?.bulkDraft || null);
   });
 
   useEffect(() => {
@@ -71,28 +84,38 @@ export function DashboardView() {
     }
   };
 
-  const handleStartWorkout = async () => {
+  const handleLogWorkout = () => {
+    if (bulkDraft) {
+      navigate('/log', { state: { bulkSession: bulkDraft, mode: 'bulk' } });
+      return;
+    }
+    setWeekModalMode('bulk');
+    setWeekModalOpen(true);
+  };
+
+  const handleStartWorkout = () => {
+    if (todaySession?.status === 'inProgress') {
+      navigate('/log', { state: { session: todaySession, mode: 'live' } });
+      return;
+    }
+    setWeekModalMode('live');
+    setWeekModalOpen(true);
+  };
+
+  const handleWeekConfirm = async ({ plan, dayOfWeek, sessionDate }) => {
+    setWeekModalOpen(false);
     try {
-      if (todaySession?.status === 'inProgress') {
-        navigate('/log', { state: { session: todaySession } });
+      if (weekModalMode === 'live') {
+        const res = await fitnessApi.startSession({ planId: plan._id, dayOfWeek, sessionDate });
+        await loadData();
+        navigate('/log', { state: { session: res.data[0], mode: 'live', plan } });
         return;
       }
-      const today = new Date();
-      const dayIndex = today.getDay();
-      const dayOfWeek = DAY_KEYS[dayIndex === 0 ? 6 : dayIndex - 1];
-      const res = await fitnessApi.startSession({ planId: plan?._id, dayOfWeek });
-      await loadData();
-      navigate('/log', { state: { session: res.data[0] } });
+      const res = await fitnessApi.prepareSession({ planId: plan._id, dayOfWeek, sessionDate });
+      navigate('/log', { state: { bulkSession: res.data[0], mode: 'bulk' } });
     } catch (err) {
       toast.error(err.message);
     }
-  };
-
-  const workoutButtonLabel = () => {
-    if (todaySession?.status === 'inProgress') return 'CONTINUE WORKOUT';
-    const completed = sessionSummary?.completedCount || 0;
-    if (completed > 0) return `SESSION ${completed + 1}`;
-    return 'START WORKOUT';
   };
 
   if (loading) return <div style={{ padding: '24px' }}>Loading dashboard...</div>;
@@ -121,7 +144,8 @@ export function DashboardView() {
   const statCards = [
     { label: 'WORKOUTS THIS WEEK', value: String(summary?.thisWeek?.count || 0), sub: 'sessions', icon: Flame },
     { label: 'TOTAL VOLUME', value: `${((summary?.thisWeek?.volume || 0) / 1000).toFixed(1)}K`, sub: 'kg this week', icon: Trophy },
-    { label: 'CURRENT STREAK', value: String(currentStreak), sub: 'days', icon: Timer },
+    { label: 'ADHERENCE', value: `${adherence?.avgAdherenceScore ?? '—'}`, sub: '4-week score', icon: Timer },
+    { label: 'COMPLETION', value: `${adherence?.avgCompletionPercent ?? '—'}%`, sub: 'avg per workout', icon: CheckCircle2 },
   ];
 
   const greeting = () => {
@@ -132,7 +156,7 @@ export function DashboardView() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px', overflowY: 'auto', height: '100%' }}>
+    <div className="dashboard-page">
       {streakInfo?.streakWarning && !streakInfo?.checkedInToday && (
         <div className={`streak-warning streak-warning--${streakInfo.streakWarning.type}`}>
           <AlertTriangle size={18} />
@@ -146,7 +170,7 @@ export function DashboardView() {
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
+      <div className="dashboard-page__header">
         <div>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '2.2rem', letterSpacing: '0.02em', lineHeight: 1 }}>
             {greeting()}, {user?.name?.split(' ')[0]?.toUpperCase()}
@@ -157,17 +181,23 @@ export function DashboardView() {
             {' · '}{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="dashboard-page__actions">
+          <button type="button" className="btn-secondary" onClick={() => setExportOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Download size={14} /> Sheet
+          </button>
           <button type="button" className="btn-secondary" onClick={handleCheckIn} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Zap size={14} /> Check In
           </button>
-          <button type="button" onClick={handleStartWorkout} style={{
+          <button type="button" onClick={handleLogWorkout} style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px',
             borderRadius: '8px', border: 'none', background: 'var(--color-primary)',
             color: '#080808', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer',
           }}>
-            <Play size={14} fill="#080808" />
-            {workoutButtonLabel()}
+            <ClipboardList size={14} />
+            {bulkDraft ? 'CONTINUE LOG' : 'LOG WORKOUT'}
+          </button>
+          <button type="button" className="btn-secondary" onClick={handleStartWorkout} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Play size={14} /> Live
           </button>
         </div>
       </div>
@@ -178,27 +208,44 @@ export function DashboardView() {
             <h3>Streak Awards</h3>
             <span className="medals-section__streak">{currentStreak} day streak · {currentMedal.name}</span>
           </div>
-          <div className="medals-section__current">
-            <StreakMedalBadge tier={currentMedal.tier} earned size="sm" />
-          </div>
+          <button
+            type="button"
+            className="medals-section__current"
+            onClick={() => setSelectedMedal({ medal: currentMedal, earned: currentStreak >= currentMedal.min, isCurrent: true })}
+            aria-label={`View ${currentMedal.name} award`}
+          >
+            <StreakMedalBadge tier={currentMedal.tier} earned size="sm" active />
+          </button>
         </div>
         <div className="medals-section__grid">
           {STREAK_MEDALS.filter((m) => m.min > 0).map((medal, i) => {
             const earned = currentStreak >= medal.min;
             const isCurrent = currentMedal.min === medal.min;
             return (
-              <motion.div
+              <motion.button
                 key={medal.min}
+                type="button"
                 className={`medal-card medal-card--${medal.tier}${earned ? ' medal-card--earned' : ''}${isCurrent ? ' medal-card--active' : ''}`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
+                initial={{ opacity: 0, y: 20, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                whileHover={{ y: earned ? -8 : -4, scale: earned ? 1.05 : 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ delay: i * 0.07, duration: 0.45, type: 'spring', stiffness: 260 }}
+                onClick={() => setSelectedMedal({ medal, earned, isCurrent })}
               >
-                <StreakMedalBadge tier={medal.tier} earned={earned} active={isCurrent} size="lg" />
+                {earned && <span className="medal-card__ring" aria-hidden />}
+                {earned && <span className="medal-card__shimmer" aria-hidden />}
+                <motion.div
+                  animate={isCurrent ? { y: [0, -4, 0] } : {}}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <StreakMedalBadge tier={medal.tier} earned={earned} active={isCurrent} size="md" />
+                </motion.div>
                 <strong className="medal-card__name">{medal.name}</strong>
                 <span className="medal-card__days">{medal.min}+ days</span>
                 {isCurrent && <span className="medal-card__badge">Current</span>}
-              </motion.div>
+                {!earned && <span className="medal-card__locked">Tap to preview</span>}
+              </motion.button>
             );
           })}
         </div>
@@ -216,7 +263,7 @@ export function DashboardView() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+      <div className="dashboard-stats">
         {statCards.map(({ label, value, sub, icon: Icon }) => (
           <div key={label} className="card" style={{ padding: '20px' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>{label}</div>
@@ -227,7 +274,7 @@ export function DashboardView() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div className="dashboard-charts">
         <ChartCard title="Volume Trend" subtitle="Last 4 weeks">
           <AreaChart data={volumeData}>
             <XAxis dataKey="periodLabel" tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -286,6 +333,25 @@ export function DashboardView() {
           ))}
         </div>
       )}
+
+      <StreakAwardModal
+        open={!!selectedMedal}
+        onClose={() => setSelectedMedal(null)}
+        medal={selectedMedal?.medal}
+        earned={selectedMedal?.earned}
+        isCurrent={selectedMedal?.isCurrent}
+        currentStreak={currentStreak}
+      />
+
+      <ExportSheetModal open={exportOpen} onClose={() => setExportOpen(false)} planId={plan?._id} />
+
+      <SelectWeekModal
+        open={weekModalOpen}
+        onClose={() => setWeekModalOpen(false)}
+        onConfirm={handleWeekConfirm}
+        title={weekModalMode === 'live' ? 'Start live session' : 'Log workout progress'}
+        confirmLabel={weekModalMode === 'live' ? 'Start session' : 'Load workout'}
+      />
 
       <CelebrationModal
         open={!!checkInModal}

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useAuth } from './AuthContext.jsx';
 import { AuthLayout } from './AuthLayout.jsx';
 import { useAuthCms } from './useAuthCms.js';
+import { PasswordInput } from '../../common/components/PasswordInput.jsx';
 
 export function RegisterPage() {
   const { section, content } = useAuthCms('auth_register');
@@ -31,7 +32,7 @@ export function RegisterPage() {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <input placeholder={content.namePlaceholder || 'Full Name'} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required style={inputStyle} />
         <input type="email" placeholder={content.emailPlaceholder || 'Email'} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required style={inputStyle} />
-        <input type="password" placeholder={content.passwordPlaceholder || 'Password (min 6 chars)'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} style={inputStyle} />
+        <PasswordInput placeholder={content.passwordPlaceholder || 'Password (min 6 chars)'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} inputStyle={inputStyle} />
         <button type="submit" disabled={loading} style={btnStyle}>
           {loading ? (content.submitLoading || 'Creating...') : (content.submitLabel || 'Create Account')}
         </button>

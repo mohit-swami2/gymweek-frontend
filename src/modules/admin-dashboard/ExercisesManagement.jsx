@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Upload } from 'lucide-react';
 import { exercisesApi, uploadAdminFile } from '../../common/api/cmsApi.js';
+import { API_BASE_URL } from '../../config/api.js';
 import { DataTable } from '../../common/components/DataTable.jsx';
 import { StatusBadge } from '../../common/components/StatusBadge.jsx';
 import { Modal } from '../../common/components/Modal.jsx';
 import { AdminPageShell } from './AdminPageShell.jsx';
+import { ExerciseMedia } from '../workout-logger/ExerciseMedia.jsx';
+import '../workout-logger/workout-log.css';
 
 const EQUIPMENT_TYPES = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'band'];
 const MOVEMENT_TYPES = ['push', 'pull', 'squat', 'hinge', 'carry', 'isolation', 'compound'];
@@ -26,7 +29,7 @@ const EMPTY_FORM = {
 const mediaUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  const base = import.meta.env.VITE_API_URL || '';
+  const base = API_BASE_URL;
   return `${base}${url}`;
 };
 
@@ -91,6 +94,28 @@ export function ExercisesManagement() {
 
   useEffect(() => { fetchExercises(); }, [fetchExercises]);
 
+  const previewExercise = useMemo(() => {
+    const resolveUrls = (ex, preview) => {
+      if (preview) return [mediaUrl(preview)];
+      if (ex?.mediaPreviewUrls?.length) return ex.mediaPreviewUrls;
+      if (ex?.mediaPreviewUrl) return [ex.mediaPreviewUrl];
+      if (ex?.mediaUrls?.length) return ex.mediaUrls.map((u) => mediaUrl(u));
+      if (ex?.gifUrl) return [mediaUrl(ex.gifUrl)];
+      if (form.gifUrl) return [mediaUrl(form.gifUrl)];
+      return [];
+    };
+
+    const urls = resolveUrls(editing, previewUrl);
+    return {
+      _id: editing?._id || 'preview',
+      name: form.name || editing?.name || 'Exercise',
+      mediaPreviewUrls: urls,
+      mediaPreviewUrl: urls[0],
+      gifUrl: urls[0],
+      mediaUrls: editing?.mediaUrls,
+    };
+  }, [previewUrl, form.gifUrl, form.name, editing]);
+
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
@@ -98,9 +123,10 @@ export function ExercisesManagement() {
     setModalOpen(true);
   };
 
-  const openEdit = (ex) => {
+  const openEdit = async (ex) => {
+    setModalOpen(true);
     setEditing(ex);
-    setPreviewUrl(ex.mediaPreviewUrls?.[0] || ex.mediaPreviewUrl || '');
+    setPreviewUrl(ex.mediaPreviewUrls?.[0] || ex.mediaPreviewUrl || mediaUrl(ex.gifUrl));
     setForm({
       name: ex.name || '',
       slug: ex.slug || '',
@@ -113,7 +139,28 @@ export function ExercisesManagement() {
       gifUrl: ex.gifUrl || '',
       isActive: ex.isActive !== false,
     });
-    setModalOpen(true);
+
+    try {
+      const res = await exercisesApi.get(ex._id);
+      const fresh = res.data?.[0];
+      if (!fresh) return;
+      setEditing(fresh);
+      setPreviewUrl(fresh.mediaPreviewUrls?.[0] || fresh.mediaPreviewUrl || mediaUrl(fresh.gifUrl));
+      setForm({
+        name: fresh.name || '',
+        slug: fresh.slug || '',
+        muscleGroup: fresh.muscleGroup?._id || fresh.muscleGroup || fresh.muscleGroupData?._id || '',
+        secondaryMuscles: (fresh.secondaryMuscles || []).join(', '),
+        equipmentType: fresh.equipmentType || 'barbell',
+        movementType: fresh.movementType || 'compound',
+        instructions: fresh.instructions || '',
+        videoUrl: fresh.videoUrl || '',
+        gifUrl: fresh.gifUrl || '',
+        isActive: fresh.isActive !== false,
+      });
+    } catch {
+      /* keep row data */
+    }
   };
 
   const closeModal = () => {
@@ -282,6 +329,19 @@ export function ExercisesManagement() {
       </div>
   );
 
+  const modalFooter = (
+    <div className="exercise-modal__actions">
+      <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
+        {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Exercise'}
+      </button>
+      {editing && (
+        <button type="button" className="btn-danger" onClick={(e) => handleDelete(editing, e)}>
+          Delete Exercise
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="admin-page-root">
       <AdminPageShell
@@ -303,12 +363,24 @@ export function ExercisesManagement() {
       <Modal
         open={modalOpen}
         onClose={closeModal}
-        title={editing ? 'Edit Exercise' : 'Add Exercise'}
-        size="lg"
+        title={editing ? 'View Exercise' : 'Add Exercise'}
+        size="2xl"
         backdrop="blue"
+        scrollBody
+        footer={modalFooter}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: 20 }}>
-          <div>
+        <div className="exercise-modal">
+          <div className="exercise-modal__preview">
+            <label style={labelStyle}>Preview</label>
+            <div className="exercise-modal__media">
+              <ExerciseMedia exercise={previewExercise} alt={form.name || 'Exercise'} variant="picker-full" autoPlay />
+            </div>
+            {editing?.mediaPreviewUrls?.length > 1 && (
+              <p className="exercise-modal__frames">{editing.mediaPreviewUrls.length} animation frames</p>
+            )}
+          </div>
+
+          <div className="exercise-modal__form">
             <label style={labelStyle}>Name</label>
             <input
               value={form.name}
@@ -383,7 +455,7 @@ export function ExercisesManagement() {
               placeholder="/uploads-gymweek/exercises/..."
               style={{ marginBottom: 8 }}
             />
-            <label className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', marginBottom: 16 }}>
+            <label className="btn-secondary exercise-modal__upload">
               <Upload size={14} />
               {uploading ? 'Uploading...' : 'Upload image'}
               <input type="file" accept="image/*" hidden onChange={handleImageUpload} disabled={uploading} />
@@ -396,51 +468,6 @@ export function ExercisesManagement() {
               onChange={(isActive) => setForm({ ...form, isActive })}
             />
           </div>
-
-          <div>
-            <label style={labelStyle}>Preview</label>
-            <div style={{
-              border: '1px solid var(--color-border)',
-              borderRadius: 8,
-              overflow: 'hidden',
-              background: 'var(--color-background)',
-              minHeight: 180,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            >
-              {(previewUrl || form.gifUrl) ? (
-                <>
-                  <img
-                    src={mediaUrl(previewUrl || form.gifUrl)}
-                    alt="Exercise preview"
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                  />
-                  {editing?.mediaPreviewUrls?.length > 1 && (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', margin: '8px 0 0', textAlign: 'center' }}>
-                      {editing.mediaPreviewUrls.length} frames stored
-                    </p>
-                  )}
-                </>
-              ) : (
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', padding: 16, textAlign: 'center' }}>
-                  No image yet
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 20 }}>
-          <button type="button" className="btn-primary" onClick={handleSave} disabled={saving} style={{ width: '100%' }}>
-            {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Exercise'}
-          </button>
-          {editing && (
-            <button type="button" className="btn-danger" onClick={(e) => handleDelete(editing, e)} style={{ width: '100%' }}>
-              Delete Exercise
-            </button>
-          )}
         </div>
       </Modal>
     </div>

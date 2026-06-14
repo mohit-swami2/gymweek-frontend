@@ -1,5 +1,5 @@
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, MessageSquare, Palette, FileText, Star, Mail, Shield, ScrollText, LogOut, ChevronDown, Dumbbell } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Palette, FileText, Star, Mail, Shield, ScrollText, LogOut, ChevronDown, Dumbbell, Quote } from 'lucide-react';
 import { useState } from 'react';
 import { useAdminAuth } from '../auth/AdminAuthContext.jsx';
 import { AdminOverview } from './AdminOverview.jsx';
@@ -12,6 +12,7 @@ import { CmsEmailTemplatesPage } from './cms/CmsEmailTemplatesPage.jsx';
 import { CmsTermsPage } from './cms/CmsTermsPage.jsx';
 import { CmsPrivacyPage } from './cms/CmsPrivacyPage.jsx';
 import { ExercisesManagement } from './ExercisesManagement.jsx';
+import { QuotesManagement } from './QuotesManagement.jsx';
 
 const cmsItems = [
   { to: '/admin/cms/sections', label: 'Website Content', icon: FileText },
@@ -48,6 +49,7 @@ export function AdminDashboardLayout() {
           <NavLink to="/admin/exercises" style={navStyle}><Dumbbell size={16} /> Exercises</NavLink>
           <NavLink to="/admin/contacts" style={navStyle}><MessageSquare size={16} /> Contacts</NavLink>
           <NavLink to="/admin/themes" style={navStyle}><Palette size={16} /> Themes</NavLink>
+          <NavLink to="/admin/quotes" style={navStyle}><Quote size={16} /> Quotes</NavLink>
 
           <button type="button" onClick={() => setCmsOpen(!cmsOpen)} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -76,6 +78,7 @@ export function AdminDashboardLayout() {
           <Route path="exercises" element={<ExercisesManagement />} />
           <Route path="contacts" element={<ContactsManagement />} />
           <Route path="themes" element={<ThemeSettings />} />
+          <Route path="quotes" element={<QuotesManagement />} />
           <Route path="cms/sections" element={<CmsSectionsPage />} />
           <Route path="cms/testimonials" element={<CmsTestimonialsPage />} />
           <Route path="cms/email-templates" element={<CmsEmailTemplatesPage />} />

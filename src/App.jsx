@@ -50,6 +50,7 @@ export default function App() {
         <Route path="/dashboard/*" element={<UserRoute><UserDashboardLayout /></UserRoute>} />
         <Route path="/planner" element={<UserRoute><UserDashboardLayout initialView="planner" /></UserRoute>} />
         <Route path="/log" element={<UserRoute><UserDashboardLayout initialView="log" /></UserRoute>} />
+        <Route path="/history" element={<UserRoute><UserDashboardLayout initialView="history" /></UserRoute>} />
         <Route path="/progress" element={<UserRoute><UserDashboardLayout initialView="progress" /></UserRoute>} />
         <Route path="/profile" element={<UserRoute><UserDashboardLayout initialView="profile" /></UserRoute>} />
         <Route path="/admin/*" element={<AdminRoute><AdminDashboardLayout /></AdminRoute>} />

@@ -46,21 +46,24 @@ export function ProgressView() {
   const [volumeData, setVolumeData] = useState([]);
   const [prs, setPrs] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [adherence, setAdherence] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activePr, setActivePr] = useState(null);
 
   const loadData = useCallback(async (volRange) => {
     setLoading(true);
     try {
-      const [volRes, prRes, sumRes] = await Promise.all([
+      const [volRes, prRes, sumRes, adhRes] = await Promise.all([
         fitnessApi.getVolumeProgress({ range: volRange, groupBy: 'week' }),
         fitnessApi.getPRs({ limit: 12 }),
         fitnessApi.getSummary(),
+        fitnessApi.getAdherence({ range: volRange }),
       ]);
       setVolumeData(volRes.data[0]?.data || []);
       const prList = prRes.data[0]?.prs || [];
       setPrs(prList);
       setSummary(sumRes.data[0]);
+      setAdherence(adhRes.data[0]);
       setActivePr((prev) => prev || prList[0]?._id || null);
     } finally {
       setLoading(false);
@@ -133,6 +136,13 @@ export function ProgressView() {
             hint="tracked lifts"
             icon={Trophy}
             delay={0.15}
+          />
+          <AnimatedStat
+            label="Adherence score"
+            value={adherence?.avgAdherenceScore ?? '—'}
+            hint={`${adherence?.avgCompletionPercent ?? 0}% avg completion`}
+            icon={TrendingUp}
+            delay={0.2}
           />
         </div>
       )}

@@ -1,0 +1,211 @@
+.streak-award-modal {
+  position: relative;
+  text-align: center;
+  padding: 8px 4px 4px;
+  overflow: hidden;
+}
+
+.streak-award-modal__bg {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    circle at 50% 30%,
+    color-mix(in srgb, var(--color-primary) 18%, transparent),
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+.streak-award-modal--gold .streak-award-modal__bg {
+  background: radial-gradient(circle at 50% 30%, rgba(245, 197, 24, 0.2), transparent 55%);
+}
+
+.streak-award-modal--legend .streak-award-modal__bg {
+  background: radial-gradient(circle at 50% 30%, rgba(167, 139, 250, 0.25), transparent 55%);
+}
+
+.streak-award-modal__particle {
+  position: absolute;
+  bottom: 40%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  pointer-events: none;
+}
+
+.streak-award-modal--legend .streak-award-modal__particle {
+  background: #c4b5fd;
+}
+
+.streak-award-modal__stage {
+  perspective: 900px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.streak-award-modal__medal-3d {
+  transform-style: preserve-3d;
+  position: relative;
+}
+
+.streak-award-modal__medal-inner {
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.45));
+}
+
+.streak-award-modal__pedestal {
+  width: 120px;
+  height: 16px;
+  margin: -8px auto 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.35), transparent 70%);
+  transform: rotateX(70deg);
+}
+
+.streak-award-modal__info {
+  position: relative;
+  z-index: 1;
+}
+
+.streak-award-modal__tier {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.streak-award-modal__name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 2rem;
+  margin: 4px 0 8px;
+  letter-spacing: 0.03em;
+}
+
+.streak-award-modal--legend .streak-award-modal__name {
+  background: linear-gradient(90deg, #e9d5ff, #a78bfa, #6366f1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.streak-award-modal--gold .streak-award-modal__name {
+  color: #f5c518;
+}
+
+.streak-award-modal__desc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.streak-award-modal__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.streak-award-modal__status--earned {
+  background: rgba(200, 255, 0, 0.12);
+  color: var(--color-primary);
+  border: 1px solid rgba(200, 255, 0, 0.25);
+}
+
+.streak-award-modal__status--locked {
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.streak-award-modal__streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.streak-award-modal__quote {
+  margin: 20px 0 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 80%, var(--color-background));
+  position: relative;
+  z-index: 1;
+}
+
+.streak-award-modal__quote p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.streak-award-modal__quote cite {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: normal;
+}
+
+.streak-award-modal__close {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.streak-medal-badge--xl .streak-medal-badge__icon {
+  width: 140px;
+  height: 160px;
+}
+
+.medal-card__shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: medal-shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.medal-card--earned .medal-card__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  animation: medal-ring-pulse 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes medal-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes medal-ring-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
+}

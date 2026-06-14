@@ -14,8 +14,8 @@ const TIERS = {
           <stop offset="100%" stopColor="#fff" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <path d="M38 8 L28 38 L8 42 L22 58 L18 82 L38 70 L58 82 L54 58 L68 42 L48 38 Z" fill={`url(#${id}-bronze)`} opacity={earned ? 1 : 0.35} />
-      <circle cx="60" cy="72" r="34" fill={`url(#${id}-bronze)`} stroke={earned ? '#f0c080' : '#555'} strokeWidth="2" />
+      <path d="M38 8 L28 38 L8 42 L22 58 L18 82 L38 70 L58 82 L54 58 L68 42 L48 38 Z" fill={`url(#${id}-bronze)`} opacity={earned ? 1 : 0.72} />
+      <circle cx="60" cy="72" r="34" fill={`url(#${id}-bronze)`} stroke={earned ? '#f0c080' : '#888'} strokeWidth="2" />
       <circle cx="60" cy="72" r="34" fill={`url(#${id}-shine)`} />
       <polygon points="60,52 66,68 82,68 69,78 74,94 60,84 46,94 51,78 38,68 54,68" fill={earned ? '#fff8e8' : '#888'} opacity="0.9" />
       <path d="M42 106 Q60 118 78 106 L82 132 Q60 126 38 132 Z" fill="#9a3412" opacity={earned ? 0.9 : 0.3} />
@@ -32,7 +32,7 @@ const TIERS = {
           <stop offset="100%" stopColor="#6b7a8f" />
         </linearGradient>
       </defs>
-      <path d="M34 6 L30 34 L10 40 L26 54 L20 78 L40 66 L60 78 L54 54 L70 40 L50 34 Z" fill={`url(#${id}-silver)`} opacity={earned ? 1 : 0.35} />
+      <path d="M34 6 L30 34 L10 40 L26 54 L20 78 L40 66 L60 78 L54 54 L70 40 L50 34 Z" fill={`url(#${id}-silver)`} opacity={earned ? 1 : 0.72} />
       <polygon points="60,38 88,52 88,88 60,102 32,88 32,52" fill={`url(#${id}-silver)`} stroke={earned ? '#e8eef5' : '#666'} strokeWidth="2" />
       <path d="M60 48 L68 72 L92 72 L72 86 L80 110 L60 96 L40 110 L48 86 L28 72 L52 72 Z" fill={earned ? '#1e293b' : '#555'} />
       <path d="M40 108 Q60 120 80 108 L84 134 Q60 128 36 134 Z" fill="#475569" opacity={earned ? 0.85 : 0.3} />
@@ -54,7 +54,7 @@ const TIERS = {
           <stop offset="50%" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d="M20 28 L30 8 L40 28 L60 20 L80 28 L90 8 L100 28 L108 48 L100 68 L108 88 L90 108 L60 100 L30 108 L12 88 L20 68 L12 48 Z" fill={`url(#${id}-gold)`} opacity={earned ? 0.95 : 0.25} className="streak-medal-svg__wings" />
+      <path d="M20 28 L30 8 L40 28 L60 20 L80 28 L90 8 L100 28 L108 48 L100 68 L108 88 L90 108 L60 100 L30 108 L12 88 L20 68 L12 48 Z" fill={`url(#${id}-gold)`} opacity={earned ? 0.95 : 0.65} className="streak-medal-svg__wings" />
       <ellipse cx="60" cy="118" rx="38" ry="8" fill="#000" opacity={earned ? 0.25 : 0.1} />
       <path d="M36 52 L36 108 Q60 128 84 108 L84 52 Q60 42 36 52 Z" fill={`url(#${id}-gold)`} stroke={earned ? '#fff4b0' : '#666'} strokeWidth="2" />
       <path d="M36 52 L60 42 L84 52 L84 62 Q60 54 36 62 Z" fill={earned ? '#fef08a' : '#888'} />
@@ -96,9 +96,9 @@ const TIERS = {
           <circle cx="88" cy="100" r="2.5" fill="#f0abfc" className="streak-medal-svg__spark streak-medal-svg__spark--d3" />
         </>
       )}
-      <path d="M28 34 L36 18 L44 30 L52 14 L60 26 L68 14 L76 30 L84 18 L92 34 L88 42 L32 42 Z" fill={`url(#${id}-crown)`} opacity={earned ? 1 : 0.3} filter={earned ? `url(#${id}-glow)` : undefined} />
-      <ellipse cx="60" cy="130" rx="40" ry="9" fill="#000" opacity={earned ? 0.3 : 0.1} />
-      <path d="M32 48 L32 118 Q60 140 88 118 L88 48 Q60 36 32 48 Z" fill={`url(#${id}-legend)`} stroke={earned ? '#e9d5ff' : '#666'} strokeWidth="2.5" filter={earned ? `url(#${id}-glow)` : undefined} />
+      <path d="M28 34 L36 18 L44 30 L52 14 L60 26 L68 14 L76 30 L84 18 L92 34 L88 42 L32 42 Z" fill={`url(#${id}-crown)`} opacity={earned ? 1 : 0.72} filter={earned ? `url(#${id}-glow)` : undefined} />
+      <ellipse cx="60" cy="130" rx="40" ry="9" fill="#000" opacity={earned ? 0.3 : 0.15} />
+      <path d="M32 48 L32 118 Q60 140 88 118 L88 48 Q60 36 32 48 Z" fill={`url(#${id}-legend)`} stroke={earned ? '#e9d5ff' : '#888'} strokeWidth="2.5" filter={earned ? `url(#${id}-glow)` : undefined} />
       <path d="M32 48 L60 38 L88 48 L88 58 Q60 48 32 58 Z" fill={earned ? '#c4b5fd' : '#888'} />
       <path d="M48 38 L52 28 L60 34 L68 28 L72 38" fill="none" stroke={earned ? '#fde68a' : '#555'} strokeWidth="2" />
       <polygon points="60,62 66,78 84,78 69,88 74,106 60,96 46,106 51,88 36,78 54,78" fill={earned ? '#fef08a' : '#666'} />

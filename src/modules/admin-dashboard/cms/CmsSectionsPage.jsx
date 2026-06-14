@@ -187,7 +187,7 @@ export function CmsSectionsPage() {
 
             <div className="cms-sections-page__editor">
               {selectedKey ? (
-                <div className="card cms-sections-page__editor-card">
+                <div className="card cms-sections-page__editor-card cms-sections-page__editor-card--sticky">
                   <div className="cms-sections-page__editor-head">
                     <div>
                       <h3>{SECTION_DEFINITIONS[selectedKey]?.label || selectedKey}</h3>
@@ -209,9 +209,11 @@ export function CmsSectionsPage() {
                     <option value="archived">archived</option>
                   </select>
 
-                  <CmsSectionEditor sectionKey={selectedKey} form={form} onChange={setForm} showJson={showJson} />
+                  <div className="cms-sections-page__editor-scroll">
+                    <CmsSectionEditor sectionKey={selectedKey} form={form} onChange={setForm} showJson={showJson} />
+                  </div>
 
-                  <div className="admin-form__actions">
+                  <div className="cms-sections-page__editor-actions admin-form__actions">
                     <button type="button" className="btn-primary" onClick={handleSave}>
                       Save & Publish
                     </button>

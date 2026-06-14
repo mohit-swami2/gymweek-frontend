@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { websiteApi } from '../../common/api/client.js';
 import { AuthLayout } from './AuthLayout.jsx';
 import { useAuthCms } from './useAuthCms.js';
+import { PasswordInput } from '../../common/components/PasswordInput.jsx';
 
 export function ResetPasswordPage() {
   const { section, content } = useAuthCms('auth_reset_password');
@@ -34,7 +35,7 @@ export function ResetPasswordPage() {
   return (
     <AuthLayout title={section?.title || 'Set New Password'} subtitle={section?.subtitle || 'Choose a strong password'}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <input type="password" placeholder={content.passwordPlaceholder || 'New password'} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} style={inputStyle} />
+        <PasswordInput placeholder={content.passwordPlaceholder || 'New password'} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} inputStyle={inputStyle} />
         <button type="submit" disabled={loading || !token} style={btnStyle}>
           {loading ? (content.submitLoading || 'Saving...') : (content.submitLabel || 'Update Password')}
         </button>

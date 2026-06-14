@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, X, ArrowLeft, ChevronRight, Plus, Calendar, Sparkles, Trash2, Pencil } from 'lucide-react';
+import { Save, X, ArrowLeft, ChevronRight, Plus, Calendar, Sparkles, Trash2, Pencil, ChevronUp, ChevronDown, Copy, Bookmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { Modal } from '../../common/components/Modal.jsx';
@@ -30,6 +30,7 @@ import { DayMusclePicker } from './DayMusclePicker.jsx';
 import { ConfigureWeekHeader } from './ConfigureWeekHeader.jsx';
 import { ExercisePickerModal } from './ExercisePickerModal.jsx';
 import { ExerciseMedia } from '../workout-logger/ExerciseMedia.jsx';
+import { PlannerSkeleton } from './PlannerSkeleton.jsx';
 import '../workout-logger/workout-log.css';
 import './planner.css';
 
@@ -61,6 +62,8 @@ export function WeeklyPlanner() {
   const [saveQuote, setSaveQuote] = useState(null);
   const [isEditingExisting, setIsEditingExisting] = useState(false);
   const [pickerDayIndex, setPickerDayIndex] = useState(null);
+  const [activePlanDay, setActivePlanDay] = useState(0);
+  const [hoverWeekOffset, setHoverWeekOffset] = useState(null);
 
   const loadPlansList = useCallback(() => {
     return fitnessApi.getPlans({ limit: 100 }).then((res) => setPlansList(res.data || []));
@@ -252,8 +255,40 @@ export function WeeklyPlanner() {
 
   const removeExercise = (dayIndex, exIndex) => {
     const days = [...plan.days];
-    days[dayIndex].plannedExercises = days[dayIndex].plannedExercises.filter((_, i) => i !== exIndex);
+    days[dayIndex].plannedExercises = days[dayIndex].plannedExercises.filter((_, i) => i !== exIndex)
+      .map((pe, i) => ({ ...pe, orderIndex: i }));
     setPlan({ ...plan, days });
+  };
+
+  const moveExercise = (dayIndex, exIndex, direction) => {
+    const days = [...plan.days];
+    const list = [...days[dayIndex].plannedExercises];
+    const target = exIndex + direction;
+    if (target < 0 || target >= list.length) return;
+    [list[exIndex], list[target]] = [list[target], list[exIndex]];
+    days[dayIndex].plannedExercises = list.map((pe, i) => ({ ...pe, orderIndex: i }));
+    setPlan({ ...plan, days });
+  };
+
+  const duplicateDayTo = async (sourceDayOfWeek, targetDayOfWeek) => {
+    try {
+      const res = await fitnessApi.duplicateDay(plan._id, { sourceDayOfWeek, targetDayOfWeek });
+      setPlan(res.data[0]);
+      toast.success('Day duplicated');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    const name = window.prompt('Template name');
+    if (!name?.trim()) return;
+    try {
+      await fitnessApi.savePlanTemplate(plan._id, name.trim());
+      toast.success('Saved as weekly template');
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   const updateSet = (dayIndex, exIndex, setIndex, field, value) => {
@@ -313,12 +348,173 @@ export function WeeklyPlanner() {
   const isPartialWeek = isCurrentWeek(plan?.weekStart) && weekOffset === 0;
   const plannerMuscles = getPlannerMuscles(muscleGroups);
 
-  if (loading && !plan) {
-    return <div className="planner">Loading planner...</div>;
+  useEffect(() => {
+    if (step !== 'plan' || !plan?.days?.length) return;
+    const firstEditable = plan.days.findIndex((day) => {
+      const status = isPartialWeek
+        ? getDayStatus(DAY_KEYS.indexOf(day.dayOfWeek), plan.weekStart)
+        : { isMissed: false };
+      return !status.isMissed;
+    });
+    setActivePlanDay(firstEditable >= 0 ? firstEditable : 0);
+  }, [step, plan?._id, isPartialWeek]);
+
+  const getPlanDayStatus = (day) => (
+    isPartialWeek
+      ? getDayStatus(DAY_KEYS.indexOf(day.dayOfWeek), plan?.weekStart)
+      : { isEditable: true, isMissed: false }
+  );
+
+  const renderPlanDayCard = (day, dayIndex) => {
+    const status = getPlanDayStatus(day);
+    const dayExercises = filterExercisesForDay(exercises, day, plan.splitType);
+
+    if (status.isMissed) {
+      return (
+        <div className="card planner-day planner-day--missed planner-day--panel">
+          <div className="planner-day__label">{DAY_LABELS[day.dayOfWeek]}</div>
+          <div className="planner-day__missed-overlay">
+            <span>Missed</span>
+          </div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{day.focus || '—'}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`card planner-day planner-day--panel${day.isRestDay ? ' planner-day--rest' : ''}`}>
+        {day.isRestDay ? (
+          <>
+            <div className="planner-day__label">{DAY_LABELS[day.dayOfWeek]}</div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Rest Day</div>
+            <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>{day.focus}</div>
+          </>
+        ) : (
+          <>
+            <div className="planner-day__head">
+              <span className="planner-day__label">{DAY_LABELS[day.dayOfWeek]}</span>
+              {!isEditingExisting && status.isEditable && (
+                <label className="planner-day__rest-toggle">
+                  <input type="checkbox" checked={day.isRestDay} onChange={(e) => updateDay(dayIndex, { isRestDay: e.target.checked })} />
+                  Rest
+                </label>
+              )}
+            </div>
+            {isEditingExisting ? (
+              <div className="planner-day__focus-readonly">
+                <span className="planner-day__focus">{day.focus || 'Training day'}</span>
+                {plan.splitType === 'double_muscle' && day.primaryMuscle && day.secondaryMuscle && (
+                  <span className="planner-day__focus-meta">
+                    {day.primarySets ?? 3} + {day.secondarySets ?? 3} sets
+                  </span>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="planner-day__muscle-picker">
+                  <DayMusclePicker
+                    splitType={plan.splitType}
+                    day={day}
+                    muscleGroups={plannerMuscles}
+                    disabled={!status.isEditable}
+                    onChange={(updates) => updateDay(dayIndex, updates)}
+                  />
+                </div>
+                {day.focus && <div className="planner-day__focus">{day.focus}</div>}
+              </>
+            )}
+            <div className="planner-day__exercises">
+              <AnimatePresence initial={false}>
+                {(day.plannedExercises || []).map((pe, exIndex) => {
+                  const ex = exercises.find((e) => e._id === pe.exerciseId || e._id === pe.exerciseId?._id);
+                  return (
+                    <motion.div
+                      key={`${day.dayOfWeek}-ex-${exIndex}`}
+                      className="planner-exercise"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <button type="button" className="planner-exercise__remove" onClick={() => removeExercise(dayIndex, exIndex)} disabled={!status.isEditable} title="Remove exercise">
+                        <X size={12} />
+                      </button>
+                      {status.isEditable && (
+                        <div className="planner-exercise__reorder">
+                          <button type="button" onClick={() => moveExercise(dayIndex, exIndex, -1)} disabled={exIndex === 0} title="Move up"><ChevronUp size={12} /></button>
+                          <button type="button" onClick={() => moveExercise(dayIndex, exIndex, 1)} disabled={exIndex === (day.plannedExercises?.length || 0) - 1} title="Move down"><ChevronDown size={12} /></button>
+                        </div>
+                      )}
+                      <div className="planner-exercise__head">
+                        {ex && <ExerciseMedia exercise={ex} alt={ex.name} variant="thumb" autoPlay={false} />}
+                        <div className="planner-exercise__meta">
+                          <div className="planner-exercise__name">{ex?.name || 'Exercise'}</div>
+                        </div>
+                      </div>
+                      <div className="planner-exercise__sets">
+                        <AnimatePresence initial={false}>
+                          {(pe.sets || []).map((set, setIndex) => (
+                            <motion.div
+                              key={`set-${setIndex}`}
+                              className="planner-set-row"
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 8, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <span className="planner-set-row__label">Set {set.setIndex}</span>
+                              <input type="number" placeholder="kg" value={set.targetWeight || ''} disabled={!status.isEditable} onChange={(e) => updateSet(dayIndex, exIndex, setIndex, 'targetWeight', e.target.value)} />
+                              <input type="number" placeholder="reps" value={set.targetReps || ''} disabled={!status.isEditable} onChange={(e) => updateSet(dayIndex, exIndex, setIndex, 'targetReps', e.target.value)} />
+                              {status.isEditable && (
+                                <button
+                                  type="button"
+                                  className="planner-set-row__delete"
+                                  onClick={() => removeSet(dayIndex, exIndex, setIndex)}
+                                  title="Remove set"
+                                  aria-label={`Remove set ${set.setIndex}`}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                        {status.isEditable && (
+                          <motion.button
+                            type="button"
+                            className="planner-add-set"
+                            onClick={() => addSet(dayIndex, exIndex)}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Plus size={12} /> Add set
+                          </motion.button>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+            {dayExercises.length === 0 && status.isEditable && (
+              <p className="planner-day__no-exercises">No exercises match &ldquo;{day.focus}&rdquo; — adjust focus or split.</p>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  if (loading && step === 'list' && !plansList.length) {
+    return <PlannerSkeleton />;
+  }
+
+  if (loading && !plan && step !== 'list') {
+    return <PlannerSkeleton />;
   }
 
   return (
-    <div className="planner">
+    <div className={`planner${step === 'plan' ? ' planner--plan-step' : ''}`}>
       <div className="planner__header">
         <div>
           <h1 className="planner__title">Weekly Planner</h1>
@@ -342,9 +538,6 @@ export function WeeklyPlanner() {
                   Change Split
                 </button>
               )}
-              <button type="button" className="btn-primary" onClick={handleSave} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Save size={14} /> {saving ? 'Saving...' : 'Save Plan'}
-              </button>
             </>
           )}
           {step === 'list' && (
@@ -564,173 +757,115 @@ export function WeeklyPlanner() {
         </motion.div>
       )}
 
-      {step === 'plan' && plan && (
+      {step === 'plan' && plan && (() => {
+        const activeDay = plan.days[activePlanDay];
+        const activeStatus = activeDay ? getPlanDayStatus(activeDay) : { isEditable: false, isMissed: true };
+        const activeDayExercises = activeDay
+          ? filterExercisesForDay(exercises, activeDay, plan.splitType)
+          : [];
+
+        return (
         <motion.div
           key="step-plan"
-          className={`planner-week-band planner-week-band--${weekOffset % 2 === 0 ? 'even' : 'odd'} planner-step`}
+          className={`planner-week-band planner-week-band--${weekOffset % 2 === 0 ? 'even' : 'odd'} planner-step planner-plan-step`}
           {...STEP_MOTION}
         >
           <div className="planner-week-band__label">
             {plan.weekLabel || formatWeekRange(plan.weekStart)} · {getSplitLabel(plan.splitType)}
           </div>
-          <div className="planner-grid">
-          {plan.days.map((day, dayIndex) => {
-            const dayKeyIndex = DAY_KEYS.indexOf(day.dayOfWeek);
-            const status = isPartialWeek ? getDayStatus(dayKeyIndex, plan.weekStart) : { isEditable: true, isMissed: false };
-            const dayExercises = filterExercisesForDay(exercises, day, plan.splitType);
 
-            if (status.isMissed) {
-              return (
-                <motion.div
-                  key={day.dayOfWeek}
-                  className="card planner-day planner-day--missed"
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: dayIndex * 0.05 }}
-                >
-                  <div className="planner-day__label">{DAY_LABELS[day.dayOfWeek]}</div>
-                  <div className="planner-day__missed-overlay">
-                    <span>Missed</span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{day.focus || '—'}</div>
-                </motion.div>
-              );
-            }
-
-            return (
-              <motion.div
-                key={day.dayOfWeek}
-                className={`card planner-day${day.isRestDay ? ' planner-day--rest' : ''}`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: dayIndex * 0.05, type: 'spring', stiffness: 300, damping: 24 }}
-              >
-                {day.isRestDay ? (
-                  <>
-                    <div className="planner-day__label">{DAY_LABELS[day.dayOfWeek]}</div>
-                    <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Rest Day</div>
-                    <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>{day.focus}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="planner-day__head">
-                      <span className="planner-day__label">{DAY_LABELS[day.dayOfWeek]}</span>
-                      {!isEditingExisting && status.isEditable && (
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-                          <input type="checkbox" checked={day.isRestDay} onChange={(e) => updateDay(dayIndex, { isRestDay: e.target.checked })} />
-                          Rest
-                        </label>
-                      )}
-                    </div>
-                    {isEditingExisting ? (
-                      <div className="planner-day__focus-readonly">
-                        <span className="planner-day__focus">{day.focus || 'Training day'}</span>
-                        {plan.splitType === 'double_muscle' && day.primaryMuscle && day.secondaryMuscle && (
-                          <span className="planner-day__focus-meta">
-                            {day.primarySets ?? 3} + {day.secondarySets ?? 3} sets
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <>
-                        <div style={{ marginBottom: 12 }}>
-                          <DayMusclePicker
-                            splitType={plan.splitType}
-                            day={day}
-                            muscleGroups={plannerMuscles}
-                            disabled={!status.isEditable}
-                            onChange={(updates) => updateDay(dayIndex, updates)}
-                          />
-                        </div>
-                        {day.focus && <div className="planner-day__focus">{day.focus}</div>}
-                      </>
-                    )}
-                    <AnimatePresence initial={false}>
-                    {(day.plannedExercises || []).map((pe, exIndex) => {
-                      const ex = exercises.find((e) => e._id === pe.exerciseId || e._id === pe.exerciseId?._id);
-                      return (
-                        <motion.div
-                          key={`${day.dayOfWeek}-ex-${exIndex}`}
-                          className="planner-exercise"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25 }}
-                        >
-                          <button type="button" className="planner-exercise__remove" onClick={() => removeExercise(dayIndex, exIndex)} disabled={!status.isEditable} title="Remove exercise">
-                            <X size={12} />
-                          </button>
-                          <div className="planner-exercise__head">
-                            {ex && <ExerciseMedia exercise={ex} alt={ex.name} variant="thumb" autoPlay={false} />}
-                            <div className="planner-exercise__meta">
-                              <div className="planner-exercise__name">{ex?.name || 'Exercise'}</div>
-                            </div>
-                          </div>
-                          <div className="planner-exercise__sets">
-                            <AnimatePresence initial={false}>
-                            {(pe.sets || []).map((set, setIndex) => (
-                              <motion.div
-                                key={`set-${setIndex}`}
-                                className="planner-set-row"
-                                initial={{ opacity: 0, x: -8 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 8, height: 0 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <span className="planner-set-row__label">Set {set.setIndex}</span>
-                                <input type="number" placeholder="kg" value={set.targetWeight || ''} disabled={!status.isEditable} onChange={(e) => updateSet(dayIndex, exIndex, setIndex, 'targetWeight', e.target.value)} />
-                                <input type="number" placeholder="reps" value={set.targetReps || ''} disabled={!status.isEditable} onChange={(e) => updateSet(dayIndex, exIndex, setIndex, 'targetReps', e.target.value)} />
-                                {status.isEditable && (
-                                  <button
-                                    type="button"
-                                    className="planner-set-row__delete"
-                                    onClick={() => removeSet(dayIndex, exIndex, setIndex)}
-                                    title="Remove set"
-                                    aria-label={`Remove set ${set.setIndex}`}
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                )}
-                              </motion.div>
-                            ))}
-                            </AnimatePresence>
-                            {status.isEditable && (
-                              <motion.button
-                                type="button"
-                                className="planner-add-set"
-                                onClick={() => addSet(dayIndex, exIndex)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                              >
-                                <Plus size={12} /> Add set
-                              </motion.button>
-                            )}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                    </AnimatePresence>
-                    {status.isEditable && dayExercises.length > 0 && (
-                      <button
-                        type="button"
-                        className="planner-select-exercises"
-                        onClick={() => setPickerDayIndex(dayIndex)}
-                      >
-                        <Plus size={14} />
-                        Select exercises ({dayExercises.length} for {day.focus})
-                      </button>
-                    )}
-                    {dayExercises.length === 0 && status.isEditable && (
-                      <p className="planner-day__no-exercises">No exercises match &ldquo;{day.focus}&rdquo; — adjust focus or split.</p>
-                    )}
-                  </>
+          <div className="planner-plan-layout">
+            <div className="planner-plan-panel">
+              <AnimatePresence mode="wait">
+                {activeDay && (
+                  <motion.div
+                    key={activeDay.dayOfWeek}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 12 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {renderPlanDayCard(activeDay, activePlanDay)}
+                  </motion.div>
                 )}
-              </motion.div>
-            );
-          })}
+              </AnimatePresence>
+            </div>
+
+            <nav className="planner-plan-days-nav" aria-label="Week days">
+              {plan.days.map((day, i) => {
+                const status = getPlanDayStatus(day);
+                const exerciseCount = day.plannedExercises?.length || 0;
+                return (
+                  <button
+                    key={day.dayOfWeek}
+                    type="button"
+                    className={[
+                      'planner-plan-day-tab',
+                      activePlanDay === i ? 'planner-plan-day-tab--active' : '',
+                      day.isRestDay ? 'planner-plan-day-tab--rest' : '',
+                      status.isMissed ? 'planner-plan-day-tab--missed' : '',
+                      exerciseCount > 0 ? 'planner-plan-day-tab--done' : '',
+                    ].filter(Boolean).join(' ')}
+                    onClick={() => setActivePlanDay(i)}
+                  >
+                    <span className="planner-plan-day-tab__label">{DAY_LABELS[day.dayOfWeek]}</span>
+                    <span className="planner-plan-day-tab__meta">
+                      {status.isMissed ? 'Missed' : day.isRestDay ? 'Rest' : day.focus || 'Training'}
+                    </span>
+                    {!day.isRestDay && !status.isMissed && exerciseCount > 0 && (
+                      <span className="planner-plan-day-tab__count">{exerciseCount} ex</span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="planner-plan-footer">
+            <div className="planner-plan-footer__info">
+              <strong>{activeDay ? DAY_LABELS[activeDay.dayOfWeek] : '—'}</strong>
+              <span>{activeDay?.focus || 'Select a day'}</span>
+            </div>
+            <div className="planner-plan-footer__actions">
+              {activeStatus.isEditable && activeDayExercises.length > 0 && !activeDay?.isRestDay && (
+                <button
+                  type="button"
+                  className="btn-secondary planner-select-exercises"
+                  onClick={() => setPickerDayIndex(activePlanDay)}
+                >
+                  <Plus size={14} />
+                  Select exercises ({activeDayExercises.length})
+                </button>
+              )}
+              <button type="button" className="btn-secondary" onClick={handleSaveTemplate}>
+                <Bookmark size={14} /> Template
+              </button>
+              {activeDay && activeStatus.isEditable && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    const target = window.prompt('Duplicate to day (monday, tuesday, …)', 'tuesday');
+                    if (target) duplicateDayTo(activeDay.dayOfWeek, target.toLowerCase());
+                  }}
+                >
+                  <Copy size={14} /> Duplicate day
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                <Save size={14} />
+                {saving ? 'Saving...' : 'Save Plan'}
+              </button>
+            </div>
           </div>
         </motion.div>
-      )}
+        );
+      })()}
       </AnimatePresence>
 
       {pickerDayIndex != null && plan?.days?.[pickerDayIndex] && (
@@ -769,22 +904,34 @@ export function WeeklyPlanner() {
         </div>
         <div className="week-modal__more">
           <label>Or pick a future week</label>
-          <select
-            defaultValue=""
-            onChange={(e) => {
-              if (e.target.value !== '') {
-                handleWeekSelect(Number(e.target.value));
-                e.target.value = '';
-              }
-            }}
-          >
-            <option value="">Select week (up to {MAX_WEEK_OFFSET} weeks ahead)...</option>
-            {Array.from({ length: MAX_WEEK_OFFSET + 1 }, (_, i) => i).map((offset) => (
-              <option key={offset} value={offset}>
-                {offset === 0 ? 'Current week' : offset === 1 ? 'Next week' : `Week +${offset}`} — {formatWeekRange(getWeekStartByOffset(offset))}
-              </option>
-            ))}
-          </select>
+          <div className="week-picker-scroll">
+            {Array.from({ length: MAX_WEEK_OFFSET + 1 }, (_, i) => i).map((offset) => {
+              const isHovered = hoverWeekOffset === offset;
+              return (
+                <motion.button
+                  key={offset}
+                  type="button"
+                  className="week-picker-card"
+                  onClick={() => handleWeekSelect(offset)}
+                  onMouseEnter={() => setHoverWeekOffset(offset)}
+                  onMouseLeave={() => setHoverWeekOffset(null)}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  animate={{
+                    borderColor: isHovered ? 'var(--color-primary)' : 'var(--color-border)',
+                    boxShadow: isHovered ? '0 12px 32px rgba(0,0,0,0.25)' : '0 0 0 rgba(0,0,0,0)',
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="week-picker-card__badge">
+                    {offset === 0 ? 'Current' : offset === 1 ? 'Next' : `+${offset}`}
+                  </span>
+                  <strong>{formatWeekRange(getWeekStartByOffset(offset))}</strong>
+                  <small>{offset === 0 ? 'Remaining days editable' : 'Full week available'}</small>
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
       </Modal>
 

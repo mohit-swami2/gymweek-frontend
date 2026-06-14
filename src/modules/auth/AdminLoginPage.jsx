@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAdminAuth } from './AdminAuthContext.jsx';
 import { Dumbbell } from 'lucide-react';
+import { PasswordInput } from '../../common/components/PasswordInput.jsx';
 
 export function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -36,7 +37,7 @@ export function AdminLoginPage() {
         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>Manage GymWeek platform</p>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <input type="email" placeholder="Admin email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <PasswordInput placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '8px' }}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>

@@ -35,7 +35,6 @@ const applyTheme = (theme, panel) => {
 export function ThemeProvider({ children }) {
   const [themes, setThemes] = useState([]);
   const [activePanel, setActivePanel] = useState('website');
-  const [previewOverrides, setPreviewOverrides] = useState(null);
 
   const fetchThemes = async () => {
     try {
@@ -51,26 +50,25 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     // Public website uses fixed landing design — not dynamic theme tokens
     if (activePanel === 'website') return;
-    const theme = previewOverrides || themes.find((t) => t.targetPanel === activePanel);
+    const theme = themes.find((t) => t.targetPanel === activePanel);
     applyTheme(theme, activePanel);
-  }, [themes, activePanel, previewOverrides]);
+  }, [themes, activePanel]);
 
   const activeTheme = useMemo(
-    () => previewOverrides || themes.find((t) => t.targetPanel === activePanel),
-    [themes, activePanel, previewOverrides]
+    () => themes.find((t) => t.targetPanel === activePanel),
+    [themes, activePanel]
   );
 
   const updateTheme = async (panel, updates) => {
     const res = await adminApi.patch(`/settings/themes/${panel}`, updates);
     setThemes((prev) => prev.map((t) => (t.targetPanel === panel ? res.data[0] : t)));
-    setPreviewOverrides(null);
     return res.data[0];
   };
 
   return (
     <ThemeContext.Provider value={{
       themes, activeTheme, activePanel, setPanel: setActivePanel,
-      updateTheme, previewOverrides, setPreviewOverrides, refreshThemes: fetchThemes,
+      updateTheme, refreshThemes: fetchThemes,
     }}>
       {children}
     </ThemeContext.Provider>

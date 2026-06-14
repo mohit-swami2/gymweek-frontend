@@ -1,9 +1,30 @@
 .workout-log {
-  padding: 24px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  max-width: 720px;
+  overflow: hidden;
+  padding: 0;
+  max-width: 800px;
   margin: 0 auto;
+  width: 100%;
+}
+
+.workout-log__toolbar {
+  flex-shrink: 0;
+  padding: 16px 24px 0;
+}
+
+.workout-log__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.workout-log-panel {
+  padding: 24px;
+  max-width: 720px;
 }
 
 .workout-log__hero {
@@ -380,6 +401,124 @@
 .workout-log__complete {
   text-align: center;
   padding: 48px 24px;
+}
+
+.workout-log__empty--session {
+  position: relative;
+  overflow: hidden;
+}
+
+.workout-log__week-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.workout-log__week-bar span {
+  flex: 1;
+  color: inherit;
+  font-weight: 600;
+}
+
+.workout-log__week-change {
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.workout-log__week-change:hover {
+  text-decoration: underline;
+}
+
+.workout-log__empty--plan,
+.workout-log__empty--session {
+  max-width: 520px;
+  margin: 48px auto 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.workout-log__empty--plan::before,
+.workout-log__empty--session::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 60%);
+  pointer-events: none;
+}
+
+.workout-log__empty-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+}
+
+.workout-log__empty h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 1.75rem;
+  margin: 0 0 10px;
+}
+
+.workout-log__empty p {
+  color: var(--color-text-muted);
+  margin: 0 auto 24px;
+  max-width: 380px;
+  line-height: 1.55;
+}
+
+.workout-log__empty-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.workout-log__empty-actions .btn-primary,
+.workout-log__empty-actions .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  justify-content: center;
+}
+
+.workout-log__empty--loading {
+  max-width: 360px;
+  margin: 48px auto 0;
+}
+
+.workout-log__empty-pulse {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  background: linear-gradient(90deg, var(--color-border), color-mix(in srgb, var(--color-primary) 20%, var(--color-border)), var(--color-border));
+  background-size: 200% 100%;
+  animation: workout-empty-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes workout-empty-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .workout-log__complete h2 {

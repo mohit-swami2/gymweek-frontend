@@ -32,6 +32,38 @@ export const SPLIT_OPTIONS = [
     accent: '#f59e0b',
     preview: ['Chest + Tri', 'Back + Bi', 'Legs', 'Shoulders + Arms'],
   },
+  {
+    id: 'upper_lower',
+    label: 'Upper / Lower',
+    description: 'Alternate upper and lower body — 4 training days',
+    days: 4,
+    accent: '#64748b',
+    preview: ['Upper A', 'Lower A', 'Upper B', 'Lower B'],
+  },
+  {
+    id: 'bodybuilding',
+    label: 'Bodybuilding Split',
+    description: 'Classic 5-day body part split',
+    days: 5,
+    accent: '#8b7355',
+    preview: ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs'],
+  },
+  {
+    id: 'strength',
+    label: 'Strength Program',
+    description: 'Heavy compound focus — 3 sessions per week',
+    days: 3,
+    accent: '#5c7a5c',
+    preview: ['Squat Day', 'Bench Day', 'Deadlift Day'],
+  },
+  {
+    id: 'custom',
+    label: 'Custom Split',
+    description: 'Configure each day manually — full flexibility',
+    days: 7,
+    accent: '#94a3b8',
+    preview: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Rest'],
+  },
 ];
 
 /** Strength-focused groups for day configuration pickers */
@@ -99,7 +131,8 @@ export function hydrateDayMuscles(day, splitType, muscleGroups = []) {
 }
 
 export function enrichTemplateDays(splitId, muscleGroups = []) {
-  return SPLIT_TEMPLATES[splitId].map((d) => hydrateDayMuscles({ ...d, plannedExercises: [] }, splitId, muscleGroups));
+  const template = SPLIT_TEMPLATES[splitId] || SPLIT_TEMPLATES.custom;
+  return template.map((d) => hydrateDayMuscles({ ...d, plannedExercises: [] }, splitId, muscleGroups));
 }
 
 const tpl = (entries) =>
@@ -138,6 +171,42 @@ export const SPLIT_TEMPLATES = {
     { day: 'wednesday', focus: 'Legs', rest: false },
     { day: 'thursday', focus: 'Shoulders & Arms', rest: false },
     { day: 'friday', focus: 'Rest', rest: true },
+    { day: 'saturday', focus: 'Rest', rest: true },
+    { day: 'sunday', focus: 'Rest', rest: true },
+  ]),
+  upper_lower: tpl([
+    { day: 'monday', focus: 'Upper A', rest: false },
+    { day: 'tuesday', focus: 'Lower A', rest: false },
+    { day: 'wednesday', focus: 'Rest', rest: true },
+    { day: 'thursday', focus: 'Upper B', rest: false },
+    { day: 'friday', focus: 'Lower B', rest: false },
+    { day: 'saturday', focus: 'Rest', rest: true },
+    { day: 'sunday', focus: 'Rest', rest: true },
+  ]),
+  bodybuilding: tpl([
+    { day: 'monday', focus: 'Chest', rest: false },
+    { day: 'tuesday', focus: 'Back', rest: false },
+    { day: 'wednesday', focus: 'Shoulders', rest: false },
+    { day: 'thursday', focus: 'Arms', rest: false },
+    { day: 'friday', focus: 'Legs', rest: false },
+    { day: 'saturday', focus: 'Rest', rest: true },
+    { day: 'sunday', focus: 'Rest', rest: true },
+  ]),
+  strength: tpl([
+    { day: 'monday', focus: 'Squat Day', rest: false },
+    { day: 'tuesday', focus: 'Rest', rest: true },
+    { day: 'wednesday', focus: 'Bench Day', rest: false },
+    { day: 'thursday', focus: 'Rest', rest: true },
+    { day: 'friday', focus: 'Deadlift Day', rest: false },
+    { day: 'saturday', focus: 'Rest', rest: true },
+    { day: 'sunday', focus: 'Rest', rest: true },
+  ]),
+  custom: tpl([
+    { day: 'monday', focus: 'Day 1', rest: false },
+    { day: 'tuesday', focus: 'Day 2', rest: false },
+    { day: 'wednesday', focus: 'Day 3', rest: false },
+    { day: 'thursday', focus: 'Day 4', rest: false },
+    { day: 'friday', focus: 'Day 5', rest: false },
     { day: 'saturday', focus: 'Rest', rest: true },
     { day: 'sunday', focus: 'Rest', rest: true },
   ]),

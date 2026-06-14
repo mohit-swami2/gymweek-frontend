@@ -7,6 +7,8 @@ import { DataTable } from '../../common/components/DataTable.jsx';
 import { StatusBadge } from '../../common/components/StatusBadge.jsx';
 import { Modal } from '../../common/components/Modal.jsx';
 import { AdminPageShell } from './AdminPageShell.jsx';
+import { PasswordInput } from '../../common/components/PasswordInput.jsx';
+import { CopyableText } from '../../common/components/CopyableText.jsx';
 
 const EMPTY_FORM = {
   name: '',
@@ -166,8 +168,8 @@ export function UsersManagement() {
   };
 
   const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'email', label: 'Email' },
+    { key: 'name', label: 'Name', render: (r) => <CopyableText value={r.name} /> },
+    { key: 'email', label: 'Email', render: (r) => <CopyableText value={r.email} /> },
     { key: 'role', label: 'Role' },
     {
       key: 'status',
@@ -291,8 +293,7 @@ export function UsersManagement() {
         {!editing && (
           <>
             <label style={labelStyle}>Password</label>
-            <input
-              type="password"
+            <PasswordInput
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="Min. 6 characters"

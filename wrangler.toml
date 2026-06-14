@@ -1,0 +1,6 @@
+name = "gymweek-front"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# Static Vite SPA — no Workers services required.
+# Set VITE_API_URL in Cloudflare Pages → Settings → Environment variables.

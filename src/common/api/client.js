@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE_URL, ADMIN_API_BASE, WEBSITE_API_BASE } from '../../config/api.js';
 
 const parseResponse = (body) => ({
   data: body.data ?? [],
@@ -22,17 +23,20 @@ const createClient = (baseURL, tokenKey) => {
   });
 
   client.interceptors.response.use(
-    (res) => parseResponse(res.data),
+    (res) => {
+      if (res.config.responseType === 'blob') return res.data;
+      return parseResponse(res.data);
+    },
     (error) => Promise.reject(new Error(error.response?.data?.message || error.message))
   );
 
   return client;
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = API_BASE_URL;
 
-export const websiteApi = createClient(`${API_BASE}/api/website`, 'gymweek_user_token');
-export const adminApi = createClient(`${API_BASE}/api/admin`, 'gymweek_admin_token');
+export const websiteApi = createClient(WEBSITE_API_BASE, 'gymweek_user_token');
+export const adminApi = createClient(ADMIN_API_BASE, 'gymweek_admin_token');
 
 // Legacy alias
 export const apiClient = websiteApi;
