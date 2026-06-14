@@ -1,6 +1,11 @@
 name = "gymweek-front"
 compatibility_date = "2024-01-01"
+
+# Cloudflare Pages — static Vite output (NOT a Worker).
+# Git deploy: set Build output directory = "dist" and do NOT use "wrangler deploy".
+# CLI deploy: npm run deploy:pages  (uses wrangler pages deploy)
 pages_build_output_dir = "dist"
 
-# Static Vite SPA — no Workers services required.
-# Set VITE_API_URL in Cloudflare Pages → Settings → Environment variables.
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"

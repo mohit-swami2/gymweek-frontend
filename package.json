@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "generate:assets": "node scripts/generate-landing-pngs.mjs",
     "test:cloudflare": "node scripts/verify-cloudflare-build.mjs",
-    "test:cloudflare:full": "npm run build && npm run test:cloudflare"
+    "test:cloudflare:full": "npm run build && npm run test:cloudflare",
+    "deploy:pages": "npm run build && wrangler pages deploy dist --project-name=gymweek-front"
   },
   "dependencies": {
     "@react-three/drei": "^9.117.3",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "sharp": "^0.34.5",
-    "vite": "^6.0.6"
+    "vite": "^6.0.6",
+    "wrangler": "^4.100.0"
   }
 }
