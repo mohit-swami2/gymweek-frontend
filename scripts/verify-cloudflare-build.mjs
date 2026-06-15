@@ -50,10 +50,22 @@ checkFile('wrangler.toml');
 const wranglerText = existsSync(join(ROOT, 'wrangler.toml'))
   ? readFileSync(join(ROOT, 'wrangler.toml'), 'utf8')
   : '';
-if (wranglerText.includes('not_found_handling = "single-page-application"')) {
-  pass('wrangler.toml SPA fallback (not_found_handling)');
+if (wranglerText.includes('pages_build_output_dir')) {
+  pass('wrangler.toml pages_build_output_dir set');
 } else {
-  fail('wrangler.toml must set not_found_handling = "single-page-application"');
+  fail('wrangler.toml must set pages_build_output_dir for Cloudflare Pages');
+}
+
+if (/^\[assets\]/m.test(wranglerText)) {
+  fail('wrangler.toml [assets] is Workers-only — remove it for Cloudflare Pages deploys');
+} else {
+  pass('wrangler.toml has no [assets] block (Pages-compatible)');
+}
+
+if (existsSync(join(ROOT, 'public/404.html')) || existsSync(join(DIST, '404.html'))) {
+  fail('404.html disables Pages SPA mode — remove it so /dashboard routes work');
+} else {
+  pass('No 404.html (Pages SPA fallback enabled)');
 }
 
 if (existsSync(join(ROOT, 'public/_redirects'))) {
@@ -64,7 +76,7 @@ if (existsSync(join(ROOT, 'public/_redirects'))) {
     pass('public/_redirects present without /index.html rewrites');
   }
 } else {
-  pass('No public/_redirects (SPA handled by wrangler.toml)');
+  pass('No public/_redirects (Pages SPA — omit 404.html in build)');
 }
 
 if (checkFile('public/_headers')) {
@@ -91,7 +103,7 @@ if (!existsSync(DIST)) {
       pass('dist/_redirects present without /index.html rewrites');
     }
   } else {
-    pass('dist/_redirects absent (SPA handled by wrangler.toml)');
+    pass('dist/_redirects absent (Pages SPA — no 404.html)');
   }
 
   if (existsSync(join(DIST, '_headers'))) pass('dist/_headers copied to build output');

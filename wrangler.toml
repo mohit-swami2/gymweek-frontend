@@ -1,11 +1,6 @@
+# Cloudflare Pages (Git / wrangler pages deploy). Do not use Workers static-assets config here.
+# SPA routing: omit 404.html in dist; Pages serves index.html for unknown routes.
+# Do NOT add public/_redirects rules to /index.html (Cloudflare error 100324).
 name = "gymweek-front"
 compatibility_date = "2024-01-01"
-
-# Cloudflare Workers static assets — Vite SPA (React Router).
-# Do NOT add public/_redirects rules to /index.html — Cloudflare API rejects them
-# as infinite loops (error 100324). SPA routing is handled below instead.
 pages_build_output_dir = "dist"
-
-[assets]
-directory = "./dist"
-not_found_handling = "single-page-application"
