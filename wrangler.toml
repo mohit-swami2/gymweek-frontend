@@ -1,9 +1,9 @@
 name = "gymweek-front"
 compatibility_date = "2024-01-01"
 
-# Cloudflare Pages — static Vite output (NOT a Worker).
-# Git deploy: set Build output directory = "dist" and do NOT use "wrangler deploy".
-# CLI deploy: npm run deploy:pages  (uses wrangler pages deploy)
+# Cloudflare Workers static assets — Vite SPA (React Router).
+# Do NOT add public/_redirects rules to /index.html — Cloudflare API rejects them
+# as infinite loops (error 100324). SPA routing is handled below instead.
 pages_build_output_dir = "dist"
 
 [assets]

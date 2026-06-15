@@ -47,12 +47,24 @@ function collectJsFiles(dir, out = []) {
 console.log('\nGymWeek — Cloudflare Pages compatibility checks\n');
 
 checkFile('wrangler.toml');
-if (checkFile('public/_redirects')) {
+const wranglerText = existsSync(join(ROOT, 'wrangler.toml'))
+  ? readFileSync(join(ROOT, 'wrangler.toml'), 'utf8')
+  : '';
+if (wranglerText.includes('not_found_handling = "single-page-application"')) {
+  pass('wrangler.toml SPA fallback (not_found_handling)');
+} else {
+  fail('wrangler.toml must set not_found_handling = "single-page-application"');
+}
+
+if (existsSync(join(ROOT, 'public/_redirects'))) {
   const redirects = readFileSync(join(ROOT, 'public/_redirects'), 'utf8');
-  if (!redirects.includes('/index.html')) fail('_redirects missing SPA fallback to /index.html');
-  else pass('_redirects contains SPA fallback');
-  if (!redirects.includes('/admin/*')) fail('_redirects missing /admin/* rule');
-  else pass('_redirects contains /admin/* rule');
+  if (/\/index\.html/.test(redirects)) {
+    fail('public/_redirects must not rewrite to /index.html (Cloudflare error 100324)');
+  } else {
+    pass('public/_redirects present without /index.html rewrites');
+  }
+} else {
+  pass('No public/_redirects (SPA handled by wrangler.toml)');
 }
 
 if (checkFile('public/_headers')) {
@@ -71,8 +83,16 @@ if (!existsSync(DIST)) {
   if (existsSync(join(DIST, 'index.html'))) pass('dist/index.html exists');
   else fail('dist/index.html missing');
 
-  if (existsSync(join(DIST, '_redirects'))) pass('dist/_redirects copied to build output');
-  else fail('dist/_redirects missing (must live in public/)');
+  if (existsSync(join(DIST, '_redirects'))) {
+    const distRedirects = readFileSync(join(DIST, '_redirects'), 'utf8');
+    if (/\/index\.html/.test(distRedirects)) {
+      fail('dist/_redirects rewrites to /index.html — remove public/_redirects and redeploy');
+    } else {
+      pass('dist/_redirects present without /index.html rewrites');
+    }
+  } else {
+    pass('dist/_redirects absent (SPA handled by wrangler.toml)');
+  }
 
   if (existsSync(join(DIST, '_headers'))) pass('dist/_headers copied to build output');
   else fail('dist/_headers missing (must live in public/)');
@@ -84,7 +104,7 @@ if (!existsSync(DIST)) {
     fail('dist/assets/ missing');
   }
 
-  const wrangler = readFileSync(join(ROOT, 'wrangler.toml'), 'utf8');
+  const wrangler = wranglerText || readFileSync(join(ROOT, 'wrangler.toml'), 'utf8');
   if (wrangler.includes('pages_build_output_dir = "dist"')) {
     pass('wrangler.toml pages_build_output_dir = "dist"');
   } else {
