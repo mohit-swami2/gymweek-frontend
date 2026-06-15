@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, X, ArrowLeft, ChevronRight, Plus, Calendar, Sparkles, Trash2, Pencil, ChevronUp, ChevronDown, Copy, Bookmark } from 'lucide-react';
+import { Save, X, ArrowLeft, ChevronRight, Plus, Calendar, Sparkles, Trash2, Pencil, ChevronUp, ChevronDown, Copy, Bookmark, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { Modal } from '../../common/components/Modal.jsx';
@@ -31,6 +31,7 @@ import { ConfigureWeekHeader } from './ConfigureWeekHeader.jsx';
 import { ExercisePickerModal } from './ExercisePickerModal.jsx';
 import { ExerciseMedia } from '../workout-logger/ExerciseMedia.jsx';
 import { PlannerSkeleton } from './PlannerSkeleton.jsx';
+import { PlanPreviewModal } from './PlanPreviewModal.jsx';
 import '../workout-logger/workout-log.css';
 import './planner.css';
 
@@ -64,6 +65,7 @@ export function WeeklyPlanner() {
   const [pickerDayIndex, setPickerDayIndex] = useState(null);
   const [activePlanDay, setActivePlanDay] = useState(0);
   const [hoverWeekOffset, setHoverWeekOffset] = useState(null);
+  const [previewPlan, setPreviewPlan] = useState(null);
 
   const loadPlansList = useCallback(() => {
     return fitnessApi.getPlans({ limit: 100 }).then((res) => setPlansList(res.data || []));
@@ -538,6 +540,9 @@ export function WeeklyPlanner() {
                   Change Split
                 </button>
               )}
+              <button type="button" className="btn-secondary" onClick={() => setPreviewPlan(plan)}>
+                <Eye size={14} /> Full Preview
+              </button>
             </>
           )}
           {step === 'list' && (
@@ -596,6 +601,14 @@ export function WeeklyPlanner() {
                       </td>
                       <td>
                         <div className="plans-table__actions">
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            title="Preview full week"
+                            onClick={() => setPreviewPlan(p)}
+                          >
+                            <Eye size={14} />
+                          </button>
                           <button
                             type="button"
                             className="btn-icon"
@@ -944,6 +957,12 @@ export function WeeklyPlanner() {
         quoteAuthor={saveQuote?.author}
         primaryLabel="Go to Dashboard"
         primaryAction={goToDashboard}
+      />
+
+      <PlanPreviewModal
+        open={!!previewPlan}
+        onClose={() => setPreviewPlan(null)}
+        plan={previewPlan}
       />
     </div>
   );

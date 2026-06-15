@@ -9,6 +9,7 @@ import { SessionHistoryView } from './SessionHistoryView.jsx';
 import { ProfileView } from './ProfileView.jsx';
 import { useAuth } from '../auth/AuthContext.jsx';
 import './user-dashboard.css';
+import './view-skeletons.css';
 
 const VIEW_ROUTES = { dashboard: '/dashboard', planner: '/planner', log: '/log', history: '/history', progress: '/progress', profile: '/profile' };
 

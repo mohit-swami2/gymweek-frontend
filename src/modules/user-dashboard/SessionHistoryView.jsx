@@ -10,6 +10,7 @@ import { ComparisonPanel } from '../workout-logger/ComparisonPanel.jsx';
 import { ExportSheetModal } from '../export/ExportSheetModal.jsx';
 import { Modal } from '../../common/components/Modal.jsx';
 import './session-history.css';
+import './view-skeletons.css';
 
 const DAY_LABELS = {
   monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu',
@@ -120,26 +121,36 @@ export function SessionHistoryView() {
       </motion.header>
 
       <motion.div
-        className="session-history__stats"
+        className={`session-history__stats${loading ? ' session-history__stats--loading' : ''}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
       >
-        <div className="session-history__stat">
-          <Calendar size={18} />
-          <strong>{sessions.length}</strong>
-          <span>Sessions</span>
-        </div>
-        <div className="session-history__stat">
-          <Dumbbell size={18} />
-          <strong>{(totalVolume / 1000).toFixed(1)}K</strong>
-          <span>Total kg</span>
-        </div>
-        <div className="session-history__stat">
-          <TrendingUp size={18} />
-          <strong>{sessions.filter((s) => s.loggingMode === 'bulk').length}</strong>
-          <span>Post-gym logs</span>
-        </div>
+        {loading ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="session-history__stat session-history__stat-skeleton view-skeleton" />
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="session-history__stat">
+              <Calendar size={18} />
+              <strong>{sessions.length}</strong>
+              <span>Sessions</span>
+            </div>
+            <div className="session-history__stat">
+              <Dumbbell size={18} />
+              <strong>{(totalVolume / 1000).toFixed(1)}K</strong>
+              <span>Total kg</span>
+            </div>
+            <div className="session-history__stat">
+              <TrendingUp size={18} />
+              <strong>{sessions.filter((s) => s.loggingMode === 'bulk').length}</strong>
+              <span>Post-gym logs</span>
+            </div>
+          </>
+        )}
       </motion.div>
 
       <motion.div

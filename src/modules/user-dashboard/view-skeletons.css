@@ -1,0 +1,128 @@
+@keyframes view-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.view-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.09) 45%,
+    rgba(255, 255, 255, 0.03) 90%
+  );
+  background-size: 200% 100%;
+  animation: view-shimmer 1.5s ease-in-out infinite;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.view-skeleton--header-title {
+  width: 280px;
+  height: 36px;
+  margin-bottom: 10px;
+}
+
+.view-skeleton--header-sub {
+  width: 420px;
+  max-width: 100%;
+  height: 16px;
+}
+
+.view-skeleton--stat {
+  height: 108px;
+}
+
+.view-skeleton--card {
+  height: 180px;
+}
+
+.view-skeleton--chart {
+  height: 260px;
+}
+
+.view-skeleton--row {
+  height: 56px;
+  margin-bottom: 8px;
+}
+
+.view-skeleton--avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+}
+
+.view-skeleton--field {
+  height: 42px;
+  margin-bottom: 12px;
+}
+
+.dashboard-skeleton__header {
+  margin-bottom: 24px;
+}
+
+.dashboard-skeleton__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.dashboard-skeleton__charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.profile-skeleton {
+  padding: 24px;
+  max-width: 600px;
+}
+
+.profile-skeleton__hero {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.profile-skeleton__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.workout-log-skeleton {
+  padding: 24px;
+  max-width: 720px;
+}
+
+.workout-log-skeleton__toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.workout-log-skeleton__tab {
+  width: 140px;
+  height: 38px;
+}
+
+.session-history__stats--loading .session-history__stat {
+  pointer-events: none;
+}
+
+.session-history__stat-skeleton {
+  height: 88px;
+  border-radius: 12px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-skeleton__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dashboard-skeleton__charts {
+    grid-template-columns: 1fr;
+  }
+}

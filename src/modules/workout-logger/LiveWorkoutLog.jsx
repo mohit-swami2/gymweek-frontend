@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Check, Dumbbell, Play, ArrowRight } from 'lucide-react';
+import { Check, Dumbbell, Play, CheckCircle2, History } from 'lucide-react';
+import { WorkoutLogSkeleton } from './WorkoutLogSkeleton.jsx';
 import { toast } from 'sonner';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { ExerciseMedia, getExerciseMediaUrls } from './ExerciseMedia.jsx';
@@ -29,6 +30,7 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
   const [elapsed, setElapsed] = useState(0);
   const [finishing, setFinishing] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
   const timerRef = useRef(null);
   const activeRef = useRef(null);
 
@@ -59,9 +61,11 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
   }, [session?.dayOfWeek, plan]);
 
   useEffect(() => {
-    fitnessApi.getTodaySessionSummary().then((res) => {
-      setSessionSummary(res.data[0]);
-    }).catch(() => {});
+    setSummaryLoading(true);
+    fitnessApi.getTodaySessionSummary()
+      .then((res) => { setSessionSummary(res.data[0]); })
+      .catch(() => {})
+      .finally(() => setSummaryLoading(false));
   }, [session?.status, session?.sessionNumber]);
 
   useEffect(() => {
@@ -163,14 +167,42 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
     }
   };
 
-  if (sessionLoading) {
-    return <div className="workout-log-panel"><div className="workout-log__empty card">Loading live session…</div></div>;
+  if (sessionLoading || summaryLoading) {
+    return <WorkoutLogSkeleton />;
   }
 
   if (!session) {
     const todayKey = DAY_KEYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
     const todayPlan = plan?.days?.find((d) => d.dayOfWeek === todayKey);
-    const canStartToday = todayPlan && !todayPlan.isRestDay && todayPlan.plannedExercises?.length;
+    const todayCompleted = sessionSummary?.sessions?.find(
+      (s) => s.status === 'completed' && s.dayOfWeek === todayKey,
+    );
+    const canStartToday = todayPlan && !todayPlan.isRestDay && todayPlan.plannedExercises?.length && !todayCompleted;
+
+    if (todayCompleted) {
+      return (
+        <div className="workout-log-panel">
+          <motion.div className="workout-log__empty card workout-log__empty--session workout-log__empty--done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <CheckCircle2 size={48} color="var(--color-primary)" />
+            <h2>Today&apos;s workout done</h2>
+            <p>
+              You already logged {todayCompleted.dayOfWeek}&apos;s session
+              {todayCompleted.totalVolume ? ` · ${todayCompleted.totalVolume.toLocaleString()} kg` : ''}.
+              Live tracking isn&apos;t needed unless you want another session.
+            </p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button type="button" className="btn-secondary" onClick={() => navigate('/history')}>
+                <History size={14} /> View history
+              </button>
+              <button type="button" className="btn-secondary" onClick={onRequestWeekSelect}>
+                <Play size={14} /> Different day
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      );
+    }
+
     return (
       <div className="workout-log-panel">
         <motion.div className="workout-log__empty card workout-log__empty--session" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

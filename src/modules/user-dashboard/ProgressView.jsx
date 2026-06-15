@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { Dumbbell, TrendingUp, Trophy, Calendar } from 'lucide-react';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
+import { ProgressStatDetailModal } from './ProgressStatDetailModal.jsx';
 import './progress.css';
 
 const RANGES = [
@@ -13,14 +14,16 @@ const RANGES = [
   { id: '6m', label: '6M' },
 ];
 
-function AnimatedStat({ label, value, hint, icon: Icon, delay = 0 }) {
+function AnimatedStat({ label, value, hint, icon: Icon, delay = 0, onClick }) {
   return (
-    <motion.div
+    <motion.button
+      type="button"
       className="progress-stat"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ scale: 1.02 }}
+      onClick={onClick}
     >
       <div className="progress-stat__glow" aria-hidden />
       <div className="progress-stat__label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -37,7 +40,8 @@ function AnimatedStat({ label, value, hint, icon: Icon, delay = 0 }) {
         {value}
       </motion.div>
       {hint && <div className="progress-stat__hint">{hint}</div>}
-    </motion.div>
+      <span className="progress-stat__tap">Tap for details</span>
+    </motion.button>
   );
 }
 
@@ -49,6 +53,7 @@ export function ProgressView() {
   const [adherence, setAdherence] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activePr, setActivePr] = useState(null);
+  const [detailStat, setDetailStat] = useState(null);
 
   const loadData = useCallback(async (volRange) => {
     setLoading(true);
@@ -115,6 +120,7 @@ export function ProgressView() {
             hint="All time"
             icon={Calendar}
             delay={0}
+            onClick={() => setDetailStat('totalWorkouts')}
           />
           <AnimatedStat
             label="Lifetime volume"
@@ -122,6 +128,7 @@ export function ProgressView() {
             hint="kg lifted"
             icon={Dumbbell}
             delay={0.05}
+            onClick={() => setDetailStat('lifetimeVolume')}
           />
           <AnimatedStat
             label="This week"
@@ -129,6 +136,7 @@ export function ProgressView() {
             hint={`${summary?.improvementPercent >= 0 ? '+' : ''}${summary?.improvementPercent ?? 0}% vs last week`}
             icon={TrendingUp}
             delay={0.1}
+            onClick={() => setDetailStat('thisWeek')}
           />
           <AnimatedStat
             label="Personal records"
@@ -136,6 +144,7 @@ export function ProgressView() {
             hint="tracked lifts"
             icon={Trophy}
             delay={0.15}
+            onClick={() => setDetailStat('personalRecords')}
           />
           <AnimatedStat
             label="Adherence score"
@@ -143,6 +152,7 @@ export function ProgressView() {
             hint={`${adherence?.avgCompletionPercent ?? 0}% avg completion`}
             icon={TrendingUp}
             delay={0.2}
+            onClick={() => setDetailStat('adherence')}
           />
         </div>
       )}
@@ -248,6 +258,15 @@ export function ProgressView() {
           </div>
         </motion.section>
       )}
+
+      <ProgressStatDetailModal
+        open={!!detailStat}
+        onClose={() => setDetailStat(null)}
+        statId={detailStat}
+        summary={summary}
+        adherence={adherence}
+        prs={prs}
+      />
     </div>
   );
 }

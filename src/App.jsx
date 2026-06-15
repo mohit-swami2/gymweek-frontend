@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useAuth } from './modules/auth/AuthContext.jsx';
 import { useAdminAuth } from './modules/auth/AdminAuthContext.jsx';
 import { useTheme, resolvePanel } from './context/ThemeProvider.jsx';
@@ -31,7 +31,9 @@ function AdminRoute({ children }) {
 function ThemeSync() {
   const location = useLocation();
   const { setPanel } = useTheme();
-  useEffect(() => { setPanel(resolvePanel(location.pathname)); }, [location.pathname, setPanel]);
+  useLayoutEffect(() => {
+    setPanel(resolvePanel(location.pathname));
+  }, [location.pathname, setPanel]);
   return null;
 }
 

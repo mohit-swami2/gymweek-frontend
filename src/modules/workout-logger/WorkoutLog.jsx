@@ -8,6 +8,7 @@ import { BulkWorkoutLog } from './BulkWorkoutLog.jsx';
 import { LiveWorkoutLog } from './LiveWorkoutLog.jsx';
 import { SelectWeekModal } from './SelectWeekModal.jsx';
 import { filterConfiguredPlans, hasConfiguredPlan } from './planUtils.js';
+import { WorkoutLogSkeleton } from './WorkoutLogSkeleton.jsx';
 import './bulk-log.css';
 import './workout-log.css';
 
@@ -85,14 +86,8 @@ export function WorkoutLog() {
     }
   };
 
-  if (planLoading) {
-    return (
-      <div className="workout-log workout-log--page">
-        <div className="workout-log__content">
-          <div className="workout-log__empty card">Loading…</div>
-        </div>
-      </div>
-    );
+  if (planLoading || preparing) {
+    return <WorkoutLogSkeleton />;
   }
 
   if (!configuredPlans.length) {

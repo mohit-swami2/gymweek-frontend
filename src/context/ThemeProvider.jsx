@@ -1,74 +1,93 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { websiteApi, adminApi } from '../common/api/client.js';
+import {
+  applyThemeToDocument,
+  bootstrapThemeForPath,
+  getThemeForPanel,
+  loadCachedThemes,
+  mergeThemesWithDefaults,
+  resolvePanel,
+  saveCachedThemes,
+} from './themeConstants.js';
+
+export { resolvePanel };
 
 const ThemeContext = createContext(null);
 
-export const resolvePanel = (pathname) => {
-  if (pathname.startsWith('/admin')) return 'admin';
-  if (['/dashboard', '/planner', '/log', '/progress', '/profile'].some((p) => pathname.startsWith(p))) return 'user';
-  return 'website';
-};
-
-const applyTheme = (theme, panel) => {
-  if (!theme) return;
-  const root = document.documentElement;
-  const { colors, fontStyle, themeMode } = theme;
-
-  root.style.setProperty('--color-primary', colors?.primary || '#c8ff00');
-  root.style.setProperty('--color-secondary', colors?.secondary || '#111111');
-  root.style.setProperty('--color-background', colors?.background || '#080808');
-  root.style.setProperty('--color-surface', colors?.surface || '#111111');
-  root.style.setProperty('--color-accent', colors?.accent || '#ff4d00');
-  root.style.setProperty('--primary', colors?.primary || '#c8ff00');
-  root.style.setProperty('--background', colors?.background || '#080808');
-  root.style.setProperty('--card', colors?.surface || '#111111');
-  root.style.setProperty('--font-family', `'${fontStyle || 'Barlow'}', sans-serif`);
-  root.dataset.panel = panel;
-
-  let mode = themeMode;
-  if (themeMode === 'system') {
-    mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  root.dataset.theme = mode;
-};
-
 export function ThemeProvider({ children }) {
-  const [themes, setThemes] = useState([]);
-  const [activePanel, setActivePanel] = useState('website');
+  const initialPanel = bootstrapThemeForPath();
+  const [themes, setThemes] = useState(() => loadCachedThemes());
+  const [activePanel, setActivePanelState] = useState(initialPanel);
+  const themesRef = useRef(themes);
+  const activePanelRef = useRef(activePanel);
+  themesRef.current = themes;
+  activePanelRef.current = activePanel;
 
-  const fetchThemes = async () => {
-    try {
-      const res = await websiteApi.get('/settings/themes');
-      setThemes(res.data);
-    } catch (err) {
-      console.warn('Theme load failed:', err.message);
-    }
-  };
+  const applyPanelTheme = useCallback((panel, list = themesRef.current) => {
+    if (panel === 'website') return;
+    applyThemeToDocument(getThemeForPanel(list, panel), panel);
+  }, []);
 
-  useEffect(() => { fetchThemes(); }, []);
+  const setPanel = useCallback((panel) => {
+    setActivePanelState(panel);
+    applyPanelTheme(panel);
+  }, [applyPanelTheme]);
 
-  useEffect(() => {
-    // Public website uses fixed landing design — not dynamic theme tokens
-    if (activePanel === 'website') return;
-    const theme = themes.find((t) => t.targetPanel === activePanel);
-    applyTheme(theme, activePanel);
-  }, [themes, activePanel]);
+  useLayoutEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await websiteApi.get('/settings/themes');
+        if (cancelled) return;
+        const merged = mergeThemesWithDefaults(res.data || []);
+        saveCachedThemes(merged);
+        setThemes(merged);
+        applyPanelTheme(activePanelRef.current, merged);
+      } catch (err) {
+        console.warn('Theme load failed:', err.message);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [applyPanelTheme]);
+
+  useLayoutEffect(() => {
+    applyPanelTheme(activePanel);
+  }, [activePanel, themes, applyPanelTheme]);
 
   const activeTheme = useMemo(
-    () => themes.find((t) => t.targetPanel === activePanel),
+    () => getThemeForPanel(themes, activePanel),
     [themes, activePanel]
   );
 
   const updateTheme = async (panel, updates) => {
     const res = await adminApi.patch(`/settings/themes/${panel}`, updates);
-    setThemes((prev) => prev.map((t) => (t.targetPanel === panel ? res.data[0] : t)));
-    return res.data[0];
+    const updated = res.data[0];
+    setThemes((prev) => {
+      const next = prev.map((t) => (t.targetPanel === panel ? updated : t));
+      saveCachedThemes(next);
+      return next;
+    });
+    if (activePanel === panel) {
+      applyThemeToDocument(updated, panel);
+    }
+    return updated;
+  };
+
+  const refreshThemes = async () => {
+    const res = await websiteApi.get('/settings/themes');
+    const merged = mergeThemesWithDefaults(res.data || []);
+    saveCachedThemes(merged);
+    setThemes(merged);
+    applyPanelTheme(activePanel, merged);
+    return merged;
   };
 
   return (
     <ThemeContext.Provider value={{
-      themes, activeTheme, activePanel, setPanel: setActivePanel,
-      updateTheme, refreshThemes: fetchThemes,
+      themes, activeTheme, activePanel, setPanel,
+      updateTheme, refreshThemes,
     }}>
       {children}
     </ThemeContext.Provider>

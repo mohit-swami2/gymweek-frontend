@@ -1,0 +1,127 @@
+.profile-page {
+  padding: 24px;
+  overflow-y: auto;
+  height: 100%;
+  max-width: 640px;
+}
+
+.profile-page__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 2rem;
+  margin: 0 0 24px;
+}
+
+.profile-hero {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-hero__avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #080808;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(200, 255, 0, 0.15);
+}
+
+.profile-hero__name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 1.5rem;
+  margin: 0 0 4px;
+}
+
+.profile-hero__email {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.profile-stat {
+  text-align: center;
+  padding: 16px 12px;
+  background: var(--color-background);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.profile-stat:hover {
+  border-color: rgba(200, 255, 0, 0.25);
+  transform: translateY(-2px);
+}
+
+.profile-stat__label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.profile-stat__value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: var(--color-primary);
+  margin-top: 6px;
+}
+
+.profile-form__field {
+  margin-bottom: 16px;
+}
+
+.profile-form__field label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.profile-form__field input,
+.profile-form__field select {
+  width: 100%;
+}
+
+.profile-form__goal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.profile-form__goal-option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.profile-form__goal-option--active {
+  border-color: var(--color-primary);
+  background: rgba(200, 255, 0, 0.08);
+  color: var(--color-primary);
+  font-weight: 700;
+}
