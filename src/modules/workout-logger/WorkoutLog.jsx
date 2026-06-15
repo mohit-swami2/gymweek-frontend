@@ -72,7 +72,11 @@ export function WorkoutLog() {
     setPreparing(true);
     try {
       const res = await fitnessApi.prepareSession({ planId: plan._id, dayOfWeek, sessionDate });
-      setBulkSession(res.data[0]);
+      const loaded = res.data[0];
+      if (loaded?.status === 'completed') {
+        toast.info('Opening your logged workout for editing');
+      }
+      setBulkSession(loaded);
       setMode('bulk');
     } catch (err) {
       toast.error(err.message);

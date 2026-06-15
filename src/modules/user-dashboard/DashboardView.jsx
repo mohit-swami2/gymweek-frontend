@@ -112,7 +112,11 @@ export function DashboardView() {
         return;
       }
       const res = await fitnessApi.prepareSession({ planId: plan._id, dayOfWeek, sessionDate });
-      navigate('/log', { state: { bulkSession: res.data[0], mode: 'bulk' } });
+      const loaded = res.data[0];
+      if (loaded?.status === 'completed') {
+        toast.info('Opening your logged workout for editing');
+      }
+      navigate('/log', { state: { bulkSession: loaded, mode: 'bulk' } });
     } catch (err) {
       toast.error(err.message);
     }

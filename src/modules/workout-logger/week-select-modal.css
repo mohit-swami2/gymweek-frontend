@@ -125,3 +125,13 @@
   font-size: 0.72rem;
   color: var(--color-text-muted);
 }
+
+.week-select__logged {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.68rem !important;
+  color: var(--color-primary) !important;
+  font-weight: 600;
+}

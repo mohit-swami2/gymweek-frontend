@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CalendarDays, ChevronLeft, Dumbbell, ArrowRight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, Dumbbell, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../../common/components/Modal.jsx';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { formatWeekRange, isCurrentWeek } from '../../common/utils/dateUtils.js';
@@ -25,12 +25,14 @@ export function SelectWeekModal({ open, onClose, onConfirm, title = 'Select work
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loggedDays, setLoggedDays] = useState(new Set());
 
   useEffect(() => {
     if (!open) return;
     setStep('week');
     setSelectedPlan(null);
     setSelectedDay(null);
+    setLoggedDays(new Set());
     setLoading(true);
     fitnessApi.getPlans()
       .then((res) => setPlans(filterConfiguredPlans(res.data || [])))
@@ -39,6 +41,31 @@ export function SelectWeekModal({ open, onClose, onConfirm, title = 'Select work
   }, [open]);
 
   const workoutDays = selectedPlan ? getWorkoutDays(selectedPlan) : [];
+
+  useEffect(() => {
+    if (!selectedPlan || step !== 'day') return;
+    const start = new Date(selectedPlan.weekStart);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    fitnessApi.getSessions({
+      from: start.toISOString().slice(0, 10),
+      to: end.toISOString().slice(0, 10),
+      status: 'completed',
+      limit: 20,
+      loggingMode: 'bulk',
+    })
+      .then((res) => {
+        const planId = String(selectedPlan._id);
+        const days = new Set(
+          (res.data || [])
+            .filter((s) => String(s.planId?._id || s.planId) === planId)
+            .map((s) => s.dayOfWeek)
+        );
+        setLoggedDays(days);
+      })
+      .catch(() => setLoggedDays(new Set()));
+  }, [selectedPlan, step]);
 
   const handleConfirm = async () => {
     if (!selectedPlan || !selectedDay) return;
@@ -151,6 +178,11 @@ export function SelectWeekModal({ open, onClose, onConfirm, title = 'Select work
                       <Dumbbell size={16} />
                       <strong>{day.focus || 'Workout'}</strong>
                       <span>{day.plannedExercises?.length || 0} exercises</span>
+                      {loggedDays.has(day.dayOfWeek) && (
+                        <span className="week-select__logged">
+                          <CheckCircle2 size={12} /> Logged — tap to edit
+                        </span>
+                      )}
                     </motion.button>
                   ))}
                 </div>

@@ -293,3 +293,120 @@
   padding: 10px 12px;
   color: inherit;
 }
+
+/* Simplified post-gym log */
+.bulk-log__edit-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  border-color: rgba(200, 255, 0, 0.25);
+}
+
+.bulk-log__progress {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.bulk-log__progress strong {
+  font-size: 1.25rem;
+  color: var(--color-primary);
+}
+
+.bulk-log__simple-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.bulk-log__simple {
+  padding: 14px 16px;
+}
+
+.bulk-log__simple--done {
+  border-color: rgba(200, 255, 0, 0.2);
+}
+
+.bulk-log__simple--skipped {
+  opacity: 0.55;
+}
+
+.bulk-log__simple-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.bulk-log__simple-head strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.bulk-log__simple-head > div > span {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.bulk-log__simple-body {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.bulk-log__check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.bulk-log__check-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.bulk-log__simple-variance {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.bulk-log__simple-variance label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.bulk-log__simple-variance input {
+  width: 100%;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: inherit;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 520px) {
+  .bulk-log__simple-variance {
+    grid-template-columns: 1fr;
+  }
+}
