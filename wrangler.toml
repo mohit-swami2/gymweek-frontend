@@ -1,4 +1,4 @@
-name = "gymweek-front"
+name = "gymweek"
 compatibility_date = "2024-01-01"
 
 # Cloudflare Workers static assets — Vite SPA (React Router).
