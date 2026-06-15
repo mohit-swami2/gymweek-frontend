@@ -3,10 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-landing-pngs.mjs && vite build",
-    "build:pages": "npm run build",
+    "build": "vite build",
+    "build:full": "node scripts/generate-landing-pngs.mjs && vite build",
+    "build:pages": "vite build",
     "preview": "vite preview",
     "generate:assets": "node scripts/generate-landing-pngs.mjs",
     "test:cloudflare": "node scripts/verify-cloudflare-build.mjs",
