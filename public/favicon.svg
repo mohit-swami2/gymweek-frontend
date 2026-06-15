@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="GymWeek">
+  <rect width="32" height="32" rx="6" fill="#0a0a0a"/>
+  <g fill="none" stroke="#c8ff00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 11h3.5l1.2-3.2a1.2 1.2 0 0 1 1.1-.8h8.4a1.2 1.2 0 0 1 1.1.8l1.2 3.2H25"/>
+    <path d="M6 21h3.5l1.2 3.2a1.2 1.2 0 0 0 1.1.8h8.4a1.2 1.2 0 0 0 1.1-.8l1.2-3.2H25"/>
+    <path d="M11 16h10"/>
+  </g>
+  <circle cx="6" cy="11" r="2.2" fill="#c8ff00"/>
+  <circle cx="26" cy="11" r="2.2" fill="#c8ff00"/>
+  <circle cx="6" cy="21" r="2.2" fill="#c8ff00"/>
+  <circle cx="26" cy="21" r="2.2" fill="#c8ff00"/>
+</svg>
