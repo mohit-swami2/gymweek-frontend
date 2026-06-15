@@ -46,20 +46,17 @@ function collectJsFiles(dir, out = []) {
 
 console.log('\nGymWeek — Cloudflare Pages compatibility checks\n');
 
-checkFile('wrangler.toml');
-const wranglerText = existsSync(join(ROOT, 'wrangler.toml'))
-  ? readFileSync(join(ROOT, 'wrangler.toml'), 'utf8')
-  : '';
-if (wranglerText.includes('pages_build_output_dir')) {
-  pass('wrangler.toml pages_build_output_dir set');
+if (existsSync(join(ROOT, 'wrangler.toml'))) {
+  const wranglerText = readFileSync(join(ROOT, 'wrangler.toml'), 'utf8');
+  if (/^\[assets\]/m.test(wranglerText) || /^assets\s*=/m.test(wranglerText)) {
+    fail('wrangler.toml contains Workers [assets] — remove file or delete [assets] for Pages Git deploy');
+  } else if (wranglerText.includes('pages_build_output_dir')) {
+    pass('wrangler.toml is Pages-compatible');
+  } else {
+    fail('wrangler.toml exists but missing pages_build_output_dir — or delete it and use dashboard build settings');
+  }
 } else {
-  fail('wrangler.toml must set pages_build_output_dir for Cloudflare Pages');
-}
-
-if (/^\[assets\]/m.test(wranglerText)) {
-  fail('wrangler.toml [assets] is Workers-only — remove it for Cloudflare Pages deploys');
-} else {
-  pass('wrangler.toml has no [assets] block (Pages-compatible)');
+  pass('No wrangler.toml (use Cloudflare dashboard: build=npm run build, output=dist)');
 }
 
 if (existsSync(join(ROOT, 'public/404.html')) || existsSync(join(DIST, '404.html'))) {
@@ -114,13 +111,6 @@ if (!existsSync(DIST)) {
     pass('dist/assets/ exists');
   } else {
     fail('dist/assets/ missing');
-  }
-
-  const wrangler = wranglerText || readFileSync(join(ROOT, 'wrangler.toml'), 'utf8');
-  if (wrangler.includes('pages_build_output_dir = "dist"')) {
-    pass('wrangler.toml pages_build_output_dir = "dist"');
-  } else {
-    fail('wrangler.toml must set pages_build_output_dir = "dist"');
   }
 
   if (process.env.CF_PAGES === '1' || process.env.REQUIRE_VITE_API_URL === '1') {
