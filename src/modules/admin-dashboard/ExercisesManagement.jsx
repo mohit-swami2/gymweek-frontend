@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Upload } from 'lucide-react';
 import { exercisesApi, uploadAdminFile } from '../../common/api/cmsApi.js';
-import { API_BASE_URL } from '../../config/api.js';
 import { DataTable } from '../../common/components/DataTable.jsx';
 import { StatusBadge } from '../../common/components/StatusBadge.jsx';
 import { Modal } from '../../common/components/Modal.jsx';
 import { AdminPageShell } from './AdminPageShell.jsx';
-import { ExerciseMedia } from '../workout-logger/ExerciseMedia.jsx';
+import { ExerciseMedia, resolveMediaSrc } from '../workout-logger/ExerciseMedia.jsx';
 import '../workout-logger/workout-log.css';
 
 const EQUIPMENT_TYPES = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'band'];
@@ -26,12 +25,7 @@ const EMPTY_FORM = {
   isActive: true,
 };
 
-const mediaUrl = (url) => {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  const base = API_BASE_URL;
-  return `${base}${url}`;
-};
+const mediaUrl = resolveMediaSrc;
 
 const exerciseImageSrc = (ex) => mediaUrl(ex?.mediaPreviewUrls?.[0] || ex?.mediaPreviewUrl || ex?.gifUrl);
 

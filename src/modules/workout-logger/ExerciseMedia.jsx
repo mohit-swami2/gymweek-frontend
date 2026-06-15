@@ -1,14 +1,30 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
+import { API_BASE_URL } from '../../config/api.js';
+
+/** Turn API media paths into browser-loadable URLs (presigned S3 or backend uploads). */
+export function resolveMediaSrc(url) {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // Dev: Vite proxies /uploads-gymweek → backend. Prod: prefix with API host.
+  if (import.meta.env.DEV) return url.startsWith('/') ? url : `/${url}`;
+  const base = API_BASE_URL;
+  return `${base}${url.startsWith('/') ? url : `/${url}`}`;
+}
 
 export function getExerciseMediaUrls(exercise) {
   if (!exercise) return [];
-  if (exercise.mediaPreviewUrls?.length) return exercise.mediaPreviewUrls;
-  if (exercise.mediaPreviewUrl) return [exercise.mediaPreviewUrl];
-  if (exercise.mediaUrls?.length) return exercise.mediaUrls;
-  if (exercise.gifUrl) return [exercise.gifUrl];
-  return [];
+  const raw = exercise.mediaPreviewUrls?.length
+    ? exercise.mediaPreviewUrls
+    : exercise.mediaPreviewUrl
+      ? [exercise.mediaPreviewUrl]
+      : exercise.mediaUrls?.length
+        ? exercise.mediaUrls
+        : exercise.gifUrl
+          ? [exercise.gifUrl]
+          : [];
+  return raw.map(resolveMediaSrc).filter(Boolean);
 }
 
 const FADE = { duration: 0.55, ease: [0.4, 0, 0.2, 1] };
