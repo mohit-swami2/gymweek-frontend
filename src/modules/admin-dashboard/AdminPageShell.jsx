@@ -1,4 +1,5 @@
 import { Pagination } from '../../common/components/Pagination.jsx';
+import { AdminTableSkeleton } from './AdminSkeleton.jsx';
 
 export function AdminPageShell({
   title,
@@ -21,7 +22,7 @@ export function AdminPageShell({
 
       <div className={`admin-page__body ${bodyClassName}`.trim()}>
         {loading ? (
-          <p className="admin-page__loading">Loading...</p>
+          <AdminTableSkeleton />
         ) : (
           <>
             <div className="admin-page__table-scroll">{children}</div>

@@ -14,7 +14,14 @@ const parseResponse = (body) => ({
 });
 
 const createClient = (baseURL, tokenKey) => {
-  const client = axios.create({ baseURL, headers: { 'Content-Type': 'application/json' } });
+  const client = axios.create({
+    baseURL,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+    },
+  });
 
   client.interceptors.request.use((config) => {
     const token = localStorage.getItem(tokenKey);
@@ -24,6 +31,9 @@ const createClient = (baseURL, tokenKey) => {
 
   client.interceptors.response.use(
     (res) => {
+      if (res.status === 304) {
+        return Promise.reject(new Error('Received a cached (304) response with no data. Please refresh the page.'));
+      }
       if (res.config.responseType === 'blob') return res.data;
       return parseResponse(res.data);
     },

@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import { toast } from 'sonner';
 import { dashboardApi } from '../../common/api/cmsApi.js';
+import { AdminDashboardSkeleton } from './AdminSkeleton.jsx';
 
 const STAT_CARDS = [
   { key: 'totalUsers', label: 'Total Users', icon: Users, color: '#3b82f6' },
@@ -58,7 +59,7 @@ export function AdminOverview() {
   };
 
   if (loading) {
-    return <div className="admin-dashboard admin-dashboard--loading">Loading dashboard...</div>;
+    return <AdminDashboardSkeleton />;
   }
 
   const summary = stats?.summary || {};

@@ -12,6 +12,7 @@ import { ResetPasswordPage } from './modules/auth/ResetPasswordPage.jsx';
 import { AdminLoginPage } from './modules/auth/AdminLoginPage.jsx';
 import { UserDashboardLayout } from './modules/user-dashboard/UserDashboardLayout.jsx';
 import { AdminDashboardLayout } from './modules/admin-dashboard/AdminDashboardLayout.jsx';
+import { AdminShellSkeleton } from './modules/admin-dashboard/AdminSkeleton.jsx';
 
 function UserRoute({ children }) {
   const { user, loading } = useAuth();
@@ -22,7 +23,7 @@ function UserRoute({ children }) {
 
 function AdminRoute({ children }) {
   const { admin, loading } = useAdminAuth();
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>Loading...</div>;
+  if (loading) return <AdminShellSkeleton />;
   if (!admin) return <Navigate to="/admin/login" replace />;
   return children;
 }
