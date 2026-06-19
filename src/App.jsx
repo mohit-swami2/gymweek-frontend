@@ -10,6 +10,8 @@ import { RegisterPage } from './modules/auth/RegisterPage.jsx';
 import { ForgotPasswordPage } from './modules/auth/ForgotPasswordPage.jsx';
 import { ResetPasswordPage } from './modules/auth/ResetPasswordPage.jsx';
 import { AdminLoginPage } from './modules/auth/AdminLoginPage.jsx';
+import { AdminForgotPasswordPage } from './modules/auth/AdminForgotPasswordPage.jsx';
+import { AdminResetPasswordPage } from './modules/auth/AdminResetPasswordPage.jsx';
 import { UserDashboardLayout } from './modules/user-dashboard/UserDashboardLayout.jsx';
 import { AdminDashboardLayout } from './modules/admin-dashboard/AdminDashboardLayout.jsx';
 import { AdminShellSkeleton } from './modules/admin-dashboard/AdminSkeleton.jsx';
@@ -50,6 +52,8 @@ export default function App() {
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/forgot-password" element={<AdminForgotPasswordPage />} />
+        <Route path="/admin/reset-password" element={<AdminResetPasswordPage />} />
         <Route path="/dashboard/*" element={<UserRoute><UserDashboardLayout /></UserRoute>} />
         <Route path="/planner" element={<UserRoute><UserDashboardLayout initialView="planner" /></UserRoute>} />
         <Route path="/log" element={<UserRoute><UserDashboardLayout initialView="log" /></UserRoute>} />

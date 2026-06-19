@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, ChevronLeft, Dumbbell, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../../common/components/Modal.jsx';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
-import { formatWeekRange, isCurrentWeek } from '../../common/utils/dateUtils.js';
+import { formatWeekRange, isCurrentWeek, toLocalDateString } from '../../common/utils/dateUtils.js';
 import { getSplitLabel } from '../planner/splitTemplates.js';
 import {
   countWorkoutDays,
@@ -49,8 +49,8 @@ export function SelectWeekModal({ open, onClose, onConfirm, title = 'Select work
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
     fitnessApi.getSessions({
-      from: start.toISOString().slice(0, 10),
-      to: end.toISOString().slice(0, 10),
+      from: toLocalDateString(start),
+      to: toLocalDateString(end),
       status: 'completed',
       limit: 20,
       loggingMode: 'bulk',

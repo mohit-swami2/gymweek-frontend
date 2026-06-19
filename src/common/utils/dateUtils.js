@@ -2,6 +2,19 @@ export const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday',
 
 export const MAX_WEEK_OFFSET = 14;
 
+/**
+ * Format a Date as YYYY-MM-DD using LOCAL date parts.
+ * Avoids the off-by-one day shift that toISOString() introduces in
+ * positive-UTC timezones (e.g. IST).
+ */
+export function toLocalDateString(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function getMondayOfWeek(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();

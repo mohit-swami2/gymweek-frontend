@@ -1,4 +1,4 @@
-import { DAY_KEYS } from '../../common/utils/dateUtils.js';
+import { DAY_KEYS, toLocalDateString } from '../../common/utils/dateUtils.js';
 
 export function hasConfiguredPlan(plan) {
   if (!plan?.days?.length) return false;
@@ -19,7 +19,9 @@ export function getDateForPlanDay(weekStart, dayOfWeek) {
   const dayIndex = DAY_KEYS.indexOf(dayOfWeek);
   const d = new Date(start);
   d.setDate(d.getDate() + dayIndex);
-  return d.toISOString().slice(0, 10);
+  // Format from LOCAL date parts — using toISOString() would shift the day in
+  // positive-UTC timezones (e.g. IST), producing the previous calendar date.
+  return toLocalDateString(d);
 }
 
 export function dayKeyForDate(d = new Date()) {

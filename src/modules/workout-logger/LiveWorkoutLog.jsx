@@ -102,12 +102,18 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
     sum + ex.setLogs.filter((s) => s.completed).reduce((s, set) => s + (set.actualWeight || 0) * (set.actualReps || 0), 0), 0);
 
   const toggleSet = async (exIndex, setIndex) => {
-    const exerciseLogs = [...session.exerciseLogs];
-    const set = { ...exerciseLogs[exIndex].setLogs[setIndex] };
-    set.completed = !set.completed;
-    if (set.completed && !set.actualWeight) set.actualWeight = set.targetWeight;
-    if (set.completed && !set.actualReps) set.actualReps = set.targetReps;
-    exerciseLogs[exIndex].setLogs[setIndex] = set;
+    // Immutably update nested logs — avoid mutating React state in place.
+    const exerciseLogs = session.exerciseLogs.map((ex, i) => {
+      if (i !== exIndex) return ex;
+      const setLogs = (ex.setLogs || []).map((s, j) => {
+        if (j !== setIndex) return s;
+        const next = { ...s, completed: !s.completed };
+        if (next.completed && !next.actualWeight) next.actualWeight = next.targetWeight;
+        if (next.completed && !next.actualReps) next.actualReps = next.targetReps;
+        return next;
+      });
+      return { ...ex, setLogs };
+    });
     const updated = { ...session, exerciseLogs };
     setSession(updated);
     try {

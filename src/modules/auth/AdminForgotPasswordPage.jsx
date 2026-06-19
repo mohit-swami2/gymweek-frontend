@@ -1,29 +1,22 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAdminAuth } from './AdminAuthContext.jsx';
-import { useTheme } from '../../context/ThemeProvider.jsx';
 import { Dumbbell } from 'lucide-react';
-import { PasswordInput } from '../../common/components/PasswordInput.jsx';
+import { adminApi } from '../../common/api/client.js';
 import './admin-login.css';
 
-export function AdminLoginPage() {
+export function AdminForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAdminAuth();
-  const { refreshThemes, setPanel } = useTheme();
-  const navigate = useNavigate();
+  const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
-      await refreshThemes();
-      setPanel('admin');
-      toast.success('Welcome back, Super Admin');
-      navigate('/admin');
+      const res = await adminApi.post('/auth/forgot-password', { email });
+      toast.success(res.data[0]?.message || res.message || 'Reset link sent');
+      setSent(true);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -43,17 +36,18 @@ export function AdminLoginPage() {
           <Dumbbell size={20} color="var(--color-primary)" />
           <span className="gymweek-logo">GYM<span>WEEK</span> Admin</span>
         </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '6px' }}>Super Admin Login</h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>Manage GymWeek platform</p>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '6px' }}>Reset Password</h1>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
+          {sent ? 'Check your inbox for a recovery link.' : "We'll email you a recovery link"}
+        </p>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <input type="email" placeholder="Admin email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <PasswordInput placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '8px' }}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>
         <p style={{ marginTop: '16px', fontSize: '0.875rem', textAlign: 'center' }}>
-          <Link to="/admin/forgot-password">Forgot password?</Link>
+          <Link to="/admin/login">Back to login</Link>
         </p>
       </div>
     </div>
