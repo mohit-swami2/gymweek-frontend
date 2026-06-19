@@ -1,8 +1,8 @@
-export function ComparisonPanel({ comparison }) {
+export function ComparisonPanel({ comparison, embedded = false }) {
   if (!comparison) return null;
 
   return (
-    <div className="comparison-panel card">
+    <div className={`comparison-panel${embedded ? ' comparison-panel--embedded' : ' card'}`}>
       <h2>Planned vs Actual</h2>
       <div className="comparison-panel__scores">
         <div className="comparison-panel__score">

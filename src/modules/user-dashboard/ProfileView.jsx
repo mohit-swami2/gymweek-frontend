@@ -15,7 +15,7 @@ const GOALS = [
 ];
 
 export function ProfileView() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [form, setForm] = useState({});
@@ -44,6 +44,7 @@ export function ProfileView() {
     try {
       const res = await fitnessApi.updateProfile(form);
       setProfile(res.data[0]);
+      updateUser(res.data[0]);
       toast.success('Profile updated');
     } catch (err) {
       toast.error(err.message);

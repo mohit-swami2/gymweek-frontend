@@ -63,11 +63,13 @@
   background: var(--color-surface);
   color: var(--color-text);
   text-align: left;
-  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  box-sizing: border-box;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .planner-plan-day-tab:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  transform: translateY(-1px);
 }
 
 .planner-plan-day-tab--active {
@@ -553,12 +555,13 @@
   border-radius: 18px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  box-sizing: border-box;
+  transition: box-shadow 0.25s, transform 0.25s;
 }
 
 .split-customize__card:hover:not(.split-customize__card--missed) {
-  border-color: rgba(200, 255, 0, 0.2);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(200, 255, 0, 0.25), 0 12px 32px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
 }
 
 .split-customize__card--done {
@@ -567,7 +570,8 @@
 
 .split-customize__card--rest {
   background: rgba(255, 255, 255, 0.02);
-  border-style: dashed;
+  border: 1px dashed var(--color-border);
+  box-sizing: border-box;
 }
 
 .split-customize__card--missed {
@@ -993,8 +997,22 @@
 .planner-set-row {
   display: grid;
   grid-template-columns: auto 1fr 1fr auto;
-  gap: 6px;
-  align-items: center;
+  gap: 8px;
+  align-items: start;
+}
+
+.planner-set-row__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.planner-set-row__field-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
 }
 
 .planner-set-row__label {
@@ -1037,21 +1055,58 @@
   padding: 6px 10px;
   border: 1px dashed var(--color-border);
   border-radius: 8px;
+  box-sizing: border-box;
   background: transparent;
   color: var(--color-text-muted);
   font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  transition: box-shadow 0.2s, color 0.2s;
 }
 
 .planner-add-set:hover {
-  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
   color: var(--color-primary);
 }
 
-.planner-step {
+.planner-select-exercises:hover {
+  background: rgba(200, 255, 0, 0.12);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.planner-empty-exercises {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
+  min-height: 180px;
+  margin-top: 12px;
+  padding: 24px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.planner-empty-exercises strong {
+  color: var(--foreground);
+  font-size: 0.95rem;
+}
+
+.planner-empty-exercises span {
+  font-size: 0.8rem;
+  text-align: center;
+  max-width: 260px;
+}
+
+.planner-empty-exercises:hover {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
 }
 
 .planner-exercise__remove {
@@ -1075,12 +1130,13 @@
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px dashed rgba(200, 255, 0, 0.45);
+  box-sizing: border-box;
   background: rgba(200, 255, 0, 0.06);
   color: var(--color-primary);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .planner-select-exercises:hover {

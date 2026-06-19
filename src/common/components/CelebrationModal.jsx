@@ -12,6 +12,8 @@ export function CelebrationModal({
   streak,
   primaryAction,
   primaryLabel = 'Continue',
+  secondaryAction,
+  secondaryLabel,
 }) {
   return (
     <Modal open={open} onClose={onClose} size="sm">
@@ -80,6 +82,11 @@ export function CelebrationModal({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45 }}
         >
+          {secondaryAction && secondaryLabel && (
+            <button type="button" className="btn-secondary" onClick={secondaryAction}>
+              {secondaryLabel}
+            </button>
+          )}
           <button type="button" className="btn-primary" onClick={primaryAction || onClose}>
             {primaryLabel}
           </button>

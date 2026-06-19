@@ -92,7 +92,7 @@ export function WorkoutLog() {
 
   if (!configuredPlans.length) {
     return (
-      <div className="workout-log workout-log--page">
+      <div className="workout-log workout-log--page workout-log--centered">
         <div className="workout-log__content">
           <div className="workout-log__empty card workout-log__empty--plan">
             <CalendarDays size={48} color="var(--color-primary)" />
@@ -108,7 +108,7 @@ export function WorkoutLog() {
   }
 
   return (
-    <div className="workout-log workout-log--page">
+    <div className="workout-log workout-log--page workout-log--centered">
       <div className="workout-log__toolbar">
         <div className="bulk-log__mode-tabs">
           <button

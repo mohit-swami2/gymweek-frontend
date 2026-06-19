@@ -2,14 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAdminAuth } from './AdminAuthContext.jsx';
+import { useTheme } from '../../context/ThemeProvider.jsx';
 import { Dumbbell } from 'lucide-react';
 import { PasswordInput } from '../../common/components/PasswordInput.jsx';
+import './admin-login.css';
 
 export function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAdminAuth();
+  const { refreshThemes, setPanel } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,6 +20,8 @@ export function AdminLoginPage() {
     setLoading(true);
     try {
       await login(email, password);
+      await refreshThemes();
+      setPanel('admin');
       toast.success('Welcome back, Super Admin');
       navigate('/admin');
     } catch (err) {
@@ -27,8 +32,13 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', background: 'var(--color-background)' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '420px' }}>
+    <div className="admin-login">
+      <div className="admin-login__bg" aria-hidden>
+        <div className="admin-login__grid" />
+        <div className="admin-login__orb admin-login__orb--1" />
+        <div className="admin-login__orb admin-login__orb--2" />
+      </div>
+      <div className="card admin-login__card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
           <Dumbbell size={20} color="var(--color-primary)" />
           <span className="gymweek-logo">GYM<span>WEEK</span> Admin</span>

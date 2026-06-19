@@ -397,10 +397,26 @@
   margin-top: 8px;
 }
 
-.workout-log__empty,
-.workout-log__complete {
+.workout-log--centered .workout-log__content,
+.workout-log--centered .bulk-log__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 48px 24px;
+  min-height: 50vh;
+}
+
+.workout-log--centered .bulk-log__empty .btn-primary,
+.workout-log--centered .workout-log__empty .btn-primary,
+.workout-log--centered .btn-secondary {
+  min-height: 42px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+}
+
+.workout-log--centered .bulk-log__mode-tabs {
+  justify-content: center;
 }
 
 .workout-log__empty--session {

@@ -32,39 +32,11 @@ export const SPLIT_OPTIONS = [
     accent: '#f59e0b',
     preview: ['Chest + Tri', 'Back + Bi', 'Legs', 'Shoulders + Arms'],
   },
-  {
-    id: 'upper_lower',
-    label: 'Upper / Lower',
-    description: 'Alternate upper and lower body — 4 training days',
-    days: 4,
-    accent: '#64748b',
-    preview: ['Upper A', 'Lower A', 'Upper B', 'Lower B'],
-  },
-  {
-    id: 'bodybuilding',
-    label: 'Bodybuilding Split',
-    description: 'Classic 5-day body part split',
-    days: 5,
-    accent: '#8b7355',
-    preview: ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs'],
-  },
-  {
-    id: 'strength',
-    label: 'Strength Program',
-    description: 'Heavy compound focus — 3 sessions per week',
-    days: 3,
-    accent: '#5c7a5c',
-    preview: ['Squat Day', 'Bench Day', 'Deadlift Day'],
-  },
-  {
-    id: 'custom',
-    label: 'Custom Split',
-    description: 'Configure each day manually — full flexibility',
-    days: 7,
-    accent: '#94a3b8',
-    preview: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Rest'],
-  },
+  // upper_lower, bodybuilding, strength, custom — hidden for now
 ];
+
+/** Active split types shown in the planner UI */
+export const ACTIVE_SPLIT_OPTIONS = SPLIT_OPTIONS.filter((o) => ['ppl', 'single_muscle', 'double_muscle'].includes(o.id));
 
 /** Strength-focused groups for day configuration pickers */
 export function getPlannerMuscles(muscleGroups = []) {
@@ -263,27 +235,9 @@ function buildPlannedExerciseEntry(exercise, setCount = 3) {
   };
 }
 
-/** Auto-fill planned exercises from muscle/focus selection */
-export function autoPopulateDayExercises(allExercises, day, splitType) {
-  const matched = filterExercisesForDay(allExercises, day, splitType);
-  if (!matched.length) return [];
-
-  if (splitType === 'double_muscle' && day.primaryMuscle && day.secondaryMuscle) {
-    const primary = matched.filter((ex) => muscleSlug(ex) === day.primaryMuscle);
-    const secondary = matched.filter((ex) => muscleSlug(ex) === day.secondaryMuscle);
-    const items = [];
-    if (primary[0]) items.push(buildPlannedExerciseEntry(primary[0], day.primarySets ?? 3));
-    if (secondary[0]) items.push(buildPlannedExerciseEntry(secondary[0], day.secondarySets ?? 3));
-    if (primary[1]) items.push(buildPlannedExerciseEntry(primary[1], day.primarySets ?? 3));
-    if (secondary[1]) items.push(buildPlannedExerciseEntry(secondary[1], day.secondarySets ?? 3));
-    return items.map((pe, i) => ({ ...pe, orderIndex: i }));
-  }
-
-  const limit = splitType === 'ppl' ? 4 : 3;
-  return matched.slice(0, limit).map((ex, i) => ({
-    ...buildPlannedExerciseEntry(ex, 3),
-    orderIndex: i,
-  }));
+/** Exercises are chosen manually on the sets screen — no auto-fill */
+export function autoPopulateDayExercises() {
+  return [];
 }
 
 /** Filter exercises strictly by muscle group / movement for the selected day focus */

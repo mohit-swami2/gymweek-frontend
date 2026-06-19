@@ -9,6 +9,7 @@ import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { ComparisonPanel } from '../workout-logger/ComparisonPanel.jsx';
 import { ExportSheetModal } from '../export/ExportSheetModal.jsx';
 import { Modal } from '../../common/components/Modal.jsx';
+import { DatePickerField } from '../../common/components/DatePickerField.jsx';
 import './session-history.css';
 import './view-skeletons.css';
 
@@ -37,6 +38,13 @@ export function SessionHistoryView() {
   const [filters, setFilters] = useState({ from: '', to: '', dayOfWeek: '', search: '' });
   const [exportOpen, setExportOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [useSplitPane, setUseSplitPane] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const onResize = () => setUseSplitPane(window.innerWidth >= 1024);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const loadSessions = useCallback(async () => {
     setLoading(true);
@@ -55,11 +63,9 @@ export function SessionHistoryView() {
     }
   }, [filters]);
 
-  useEffect(() => { loadSessions(); }, [loadSessions]);
-
-  const openSession = async (session) => {
+  const openSession = useCallback(async (session) => {
     setSelected(session);
-    setDetailOpen(true);
+    if (!useSplitPane) setDetailOpen(true);
     setDetailLoading(true);
     setComparison(null);
     try {
@@ -70,7 +76,16 @@ export function SessionHistoryView() {
     } finally {
       setDetailLoading(false);
     }
-  };
+  }, [useSplitPane]);
+
+  useEffect(() => { loadSessions(); }, [loadSessions]);
+
+  useEffect(() => {
+    if (!useSplitPane || loading || sessions.length === 0) return;
+    if (!selected || !sessions.some((s) => s._id === selected._id)) {
+      openSession(sessions[0]);
+    }
+  }, [useSplitPane, loading, sessions, selected, openSession]);
 
   const closeDetail = () => {
     setDetailOpen(false);
@@ -102,6 +117,7 @@ export function SessionHistoryView() {
 
   return (
     <div className="session-history">
+      <div className="session-history__top">
       <motion.header
         className="session-history__header"
         initial={{ opacity: 0, y: -12 }}
@@ -160,8 +176,8 @@ export function SessionHistoryView() {
         transition={{ delay: 0.15 }}
       >
         <Filter size={14} aria-hidden />
-        <input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} aria-label="From date" />
-        <input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} aria-label="To date" />
+        <DatePickerField value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} aria-label="From date" />
+        <DatePickerField value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} aria-label="To date" />
         <select value={filters.dayOfWeek} onChange={(e) => setFilters({ ...filters, dayOfWeek: e.target.value })} aria-label="Day filter">
           <option value="">All days</option>
           {Object.entries(DAY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -171,7 +187,9 @@ export function SessionHistoryView() {
           <input placeholder="Search notes…" value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} />
         </div>
       </motion.div>
+      </div>
 
+      <div className={`session-history__body${useSplitPane ? ' session-history__body--split' : ''}`}>
       <div className="session-history__list-wrap">
         {loading && (
           <div className="session-history__loading">
@@ -196,7 +214,7 @@ export function SessionHistoryView() {
               <motion.button
                 key={s._id}
                 type="button"
-                className={`session-history__item card${selected?._id === s._id ? ' session-history__item--active' : ''}`}
+                className={`session-history__item${selected?._id === s._id ? ' session-history__item--active' : ''}`}
                 variants={itemVariants}
                 whileHover={{ scale: 1.01, x: 4 }}
                 whileTap={{ scale: 0.99 }}
@@ -217,8 +235,57 @@ export function SessionHistoryView() {
         )}
       </div>
 
+      {useSplitPane && (
+        <aside className="session-history__detail">
+          {!selected && (
+            <div className="session-history__detail-empty">
+              <Dumbbell size={40} color="var(--color-primary)" />
+              <p>Select a session from the list to view full comparison</p>
+            </div>
+          )}
+          {selected && (
+            <>
+              <div className="session-history__detail-header">
+                <h3 className="session-history__detail-title">
+                  {selected.dayOfWeek?.charAt(0).toUpperCase() + selected.dayOfWeek?.slice(1)}
+                  {' · '}
+                  {new Date(selected.sessionDate).toLocaleDateString(undefined, {
+                    weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+                  })}
+                </h3>
+                {selected.overallNote && (
+                  <blockquote className="session-history__modal-note">&ldquo;{selected.overallNote}&rdquo;</blockquote>
+                )}
+                <div className="session-history__modal-meta">
+                  <span>Volume: {selected.totalVolume?.toLocaleString()} kg</span>
+                  {selected.durationMinutes != null && <span>Duration: {selected.durationMinutes} min</span>}
+                  <span>Mode: {selected.loggingMode === 'bulk' ? 'Post-gym log' : 'Live tracking'}</span>
+                </div>
+              </div>
+              <div className="session-history__detail-scroll">
+                {detailLoading && <p className="session-history__muted">Loading comparison…</p>}
+                {!detailLoading && (
+                  comparison
+                    ? <ComparisonPanel comparison={comparison} embedded />
+                    : <p className="session-history__muted">No comparison data</p>
+                )}
+              </div>
+              <div className="session-history__detail-footer">
+                <button type="button" className="btn-secondary" onClick={() => handleDuplicate(selected._id)}>
+                  <Copy size={14} /> Duplicate workout
+                </button>
+                <button type="button" className="btn-secondary" onClick={() => handleExportReport(selected._id)}>
+                  <Download size={14} /> Export PDF
+                </button>
+              </div>
+            </>
+          )}
+        </aside>
+      )}
+      </div>
+
       <Modal
-        open={detailOpen}
+        open={detailOpen && !useSplitPane}
         onClose={closeDetail}
         title={selected ? `${selected.dayOfWeek?.toUpperCase()} — ${new Date(selected.sessionDate).toLocaleDateString()}` : 'Session'}
         size="lg"

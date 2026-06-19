@@ -52,6 +52,10 @@ export function AuthProvider({ children }) {
 
   const logout = () => clearSession();
 
+  const updateUser = (userData) => {
+    setUser((prev) => ({ ...prev, ...userData }));
+  };
+
   const exitImpersonation = () => {
     const adminToken = localStorage.getItem('gymweek_admin_token_backup');
     if (adminToken) {
@@ -63,7 +67,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, authMeta, loading, login, register, logout, exitImpersonation }}>
+    <AuthContext.Provider value={{ user, authMeta, loading, login, register, logout, updateUser, exitImpersonation }}>
       {children}
     </AuthContext.Provider>
   );

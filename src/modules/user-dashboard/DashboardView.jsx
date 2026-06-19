@@ -62,7 +62,7 @@ export function DashboardView() {
     fitnessApi.getPRs({ limit: 4 }),
   ]).then(([sumRes, planRes, volRes, sessionRes, summaryRes, streakRes, adhRes, recentRes, prRes]) => {
     setSummary(sumRes.data[0]);
-    setPlan(planRes.data[0]);
+    setPlan(planRes.data[0] || null);
     setVolumeData(volRes.data[0]?.data || []);
     setTodaySession(sessionRes.data[0] || null);
     setSessionSummary(summaryRes.data[0] || null);

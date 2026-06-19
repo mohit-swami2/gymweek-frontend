@@ -168,7 +168,23 @@ export function UsersManagement() {
   };
 
   const columns = [
-    { key: 'name', label: 'Name', render: (r) => <CopyableText value={r.name} /> },
+    {
+      key: 'name',
+      label: 'Name',
+      render: (r) => (
+        <div className="admin-user-cell">
+          <span className="admin-user-cell__avatar">
+            {(r.displayName || r.name || '?').charAt(0).toUpperCase()}
+          </span>
+          <div>
+            <strong>{r.displayName || r.name}</strong>
+            {r.displayName && r.displayName !== r.name && (
+              <small className="admin-user-cell__sub">{r.name}</small>
+            )}
+          </div>
+        </div>
+      ),
+    },
     { key: 'email', label: 'Email', render: (r) => <CopyableText value={r.email} /> },
     { key: 'role', label: 'Role' },
     {

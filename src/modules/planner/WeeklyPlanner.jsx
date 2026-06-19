@@ -16,16 +16,16 @@ import {
   DAY_KEYS,
 } from '../../common/utils/dateUtils.js';
 import {
-  SPLIT_OPTIONS,
+  ACTIVE_SPLIT_OPTIONS,
   DAY_LABELS,
   getSplitLabel,
   filterExercisesForDay,
-  autoPopulateDayExercises,
   enrichTemplateDays,
   hydrateDayMuscles,
   buildDayFocus,
   getPlannerMuscles,
 } from './splitTemplates.js';
+import { PresetValuePicker, WEIGHT_PRESETS, REP_PRESETS } from '../../common/components/PresetValuePicker.jsx';
 import { DayMusclePicker } from './DayMusclePicker.jsx';
 import { ConfigureWeekHeader } from './ConfigureWeekHeader.jsx';
 import { ExercisePickerModal } from './ExercisePickerModal.jsx';
@@ -66,9 +66,13 @@ export function WeeklyPlanner() {
   const [activePlanDay, setActivePlanDay] = useState(0);
   const [hoverWeekOffset, setHoverWeekOffset] = useState(null);
   const [previewPlan, setPreviewPlan] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const loadPlansList = useCallback(() => {
-    return fitnessApi.getPlans({ limit: 100 }).then((res) => setPlansList(res.data || []));
+    return fitnessApi.getPlans({ limit: 100 }).then((res) => {
+      const configured = (res.data || []).filter((p) => p.splitType);
+      setPlansList(configured);
+    });
   }, []);
 
   const loadExercises = useCallback(() => {
@@ -122,8 +126,7 @@ export function WeeklyPlanner() {
     }
   };
 
-  const handleDeletePlan = async (planId, weekLabel) => {
-    if (!confirm(`Delete plan for ${weekLabel}? This cannot be undone.`)) return;
+  const handleDeletePlan = async (planId) => {
     try {
       await fitnessApi.deletePlan(planId);
       toast.success('Plan deleted');
@@ -134,6 +137,8 @@ export function WeeklyPlanner() {
       loadPlansList();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -183,7 +188,7 @@ export function WeeklyPlanner() {
       const focus = d.isRestDay ? (d.focus || 'Rest') : buildDayFocus(selectedSplit, d, plannerMuscles);
       const day = { ...d, focus };
       if (!d.isRestDay) {
-        day.plannedExercises = autoPopulateDayExercises(exercises, day, selectedSplit);
+        day.plannedExercises = [];
       } else {
         day.plannedExercises = [];
       }
@@ -212,8 +217,7 @@ export function WeeklyPlanner() {
       setPlan(hydratePlanDays(res.data[0], selectedSplit));
       setIsEditingExisting(false);
       setStep('plan');
-      const added = days.reduce((n, d) => n + (d.plannedExercises?.length || 0), 0);
-      toast.success(added ? `Split applied — ${added} exercises added to your week` : 'Split applied — add exercises from each day card');
+      toast.success('Split applied — select exercises for each training day');
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -322,6 +326,11 @@ export function WeeklyPlanner() {
   };
 
   const handleSave = async () => {
+    const hasExercise = plan.days.some((d) => !d.isRestDay && (d.plannedExercises?.length || 0) > 0);
+    if (!hasExercise) {
+      toast.error('Please select at least one exercise before saving.');
+      return;
+    }
     setSaving(true);
     try {
       const payload = isEditingExisting
@@ -340,6 +349,24 @@ export function WeeklyPlanner() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const finishPlanAndReturnToList = () => {
+    setShowSaveModal(false);
+    setPlan(null);
+    setStep('list');
+    loadPlansList();
+  };
+
+  const goToNextMuscleDay = () => {
+    setShowSaveModal(false);
+    if (!plan?.days?.length) return;
+    const trainingIndexes = plan.days
+      .map((d, i) => ({ d, i }))
+      .filter(({ d }) => !d.isRestDay)
+      .map(({ i }) => i);
+    const next = trainingIndexes.find((i) => i > activePlanDay) ?? trainingIndexes[0];
+    if (next != null) setActivePlanDay(next);
   };
 
   const goToDashboard = () => {
@@ -465,8 +492,26 @@ export function WeeklyPlanner() {
                               transition={{ duration: 0.2 }}
                             >
                               <span className="planner-set-row__label">Set {set.setIndex}</span>
-                              <input type="number" placeholder="kg" value={set.targetWeight || ''} disabled={!status.isEditable} onChange={(e) => updateSet(dayIndex, exIndex, setIndex, 'targetWeight', e.target.value)} />
-                              <input type="number" placeholder="reps" value={set.targetReps || ''} disabled={!status.isEditable} onChange={(e) => updateSet(dayIndex, exIndex, setIndex, 'targetReps', e.target.value)} />
+                              <div className="planner-set-row__field">
+                                <span className="planner-set-row__field-label">kg</span>
+                                <PresetValuePicker
+                                  presets={WEIGHT_PRESETS}
+                                  unit="kg"
+                                  value={set.targetWeight}
+                                  disabled={!status.isEditable}
+                                  onChange={(v) => updateSet(dayIndex, exIndex, setIndex, 'targetWeight', v)}
+                                />
+                              </div>
+                              <div className="planner-set-row__field">
+                                <span className="planner-set-row__field-label">reps</span>
+                                <PresetValuePicker
+                                  presets={REP_PRESETS}
+                                  value={set.targetReps}
+                                  disabled={!status.isEditable}
+                                  customPlaceholder="reps"
+                                  onChange={(v) => updateSet(dayIndex, exIndex, setIndex, 'targetReps', v)}
+                                />
+                              </div>
                               {status.isEditable && (
                                 <button
                                   type="button"
@@ -497,8 +542,19 @@ export function WeeklyPlanner() {
                   );
                 })}
               </AnimatePresence>
+              {status.isEditable && !day.isRestDay && (day.plannedExercises?.length || 0) === 0 && (
+                <button
+                  type="button"
+                  className="planner-empty-exercises"
+                  onClick={() => setPickerDayIndex(dayIndex)}
+                >
+                  <Plus size={28} />
+                  <strong>No exercises yet</strong>
+                  <span>Tap to browse and add exercises for {day.focus || 'this day'}</span>
+                </button>
+              )}
             </div>
-            {dayExercises.length === 0 && status.isEditable && (
+            {dayExercises.length === 0 && status.isEditable && (day.plannedExercises?.length || 0) > 0 && (
               <p className="planner-day__no-exercises">No exercises match &ldquo;{day.focus}&rdquo; — adjust focus or split.</p>
             )}
           </>
@@ -627,7 +683,7 @@ export function WeeklyPlanner() {
                             type="button"
                             className="btn-danger"
                             title="Delete plan"
-                            onClick={() => handleDeletePlan(p._id, p.weekLabel || formatWeekRange(p.weekStart))}
+                            onClick={() => setDeleteTarget({ id: p._id, label: p.weekLabel || formatWeekRange(p.weekStart) })}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -654,7 +710,7 @@ export function WeeklyPlanner() {
             <p>Pick a structure — each option shows how your week will flow. Muscles and exercises adapt to your choice.</p>
           </div>
           <div className="split-options">
-            {SPLIT_OPTIONS.map((opt, i) => (
+            {ACTIVE_SPLIT_OPTIONS.map((opt, i) => (
               <motion.button
                 key={opt.id}
                 type="button"
@@ -763,7 +819,7 @@ export function WeeklyPlanner() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              {saving ? 'Building your plan...' : 'Add exercises & continue'}
+              {saving ? 'Building your plan...' : 'Continue to exercises'}
               <ChevronRight size={16} />
             </motion.button>
           </motion.div>
@@ -840,14 +896,14 @@ export function WeeklyPlanner() {
               <span>{activeDay?.focus || 'Select a day'}</span>
             </div>
             <div className="planner-plan-footer__actions">
-              {activeStatus.isEditable && activeDayExercises.length > 0 && !activeDay?.isRestDay && (
+              {activeStatus.isEditable && !activeDay?.isRestDay && (
                 <button
                   type="button"
                   className="btn-secondary planner-select-exercises"
                   onClick={() => setPickerDayIndex(activePlanDay)}
                 >
                   <Plus size={14} />
-                  Select exercises ({activeDayExercises.length})
+                  Select exercises{activeDayExercises.length > 0 ? ` (${activeDayExercises.length})` : ''}
                 </button>
               )}
               <button type="button" className="btn-secondary" onClick={handleSaveTemplate}>
@@ -955,9 +1011,28 @@ export function WeeklyPlanner() {
         subtitle="Your week is locked in. Time to execute."
         quote={saveQuote?.text}
         quoteAuthor={saveQuote?.author}
-        primaryLabel="Go to Dashboard"
-        primaryAction={goToDashboard}
+        primaryLabel="Plan done"
+        primaryAction={finishPlanAndReturnToList}
+        secondaryLabel="Next muscle"
+        secondaryAction={goToNextMuscleDay}
       />
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete plan?"
+        size="sm"
+        footer={(
+          <>
+            <button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)}>Cancel</button>
+            <button type="button" className="btn-danger" onClick={() => handleDeletePlan(deleteTarget.id)}>Delete</button>
+          </>
+        )}
+      >
+        <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
+          Delete plan for <strong>{deleteTarget?.label}</strong>? This cannot be undone.
+        </p>
+      </Modal>
 
       <PlanPreviewModal
         open={!!previewPlan}
