@@ -135,3 +135,20 @@
   color: var(--color-primary) !important;
   font-weight: 600;
 }
+
+.week-select__day--future {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.week-select__day--future:hover {
+  border-color: var(--color-border);
+}
+
+.week-select__future-hint {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}

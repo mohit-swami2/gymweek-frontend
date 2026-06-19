@@ -40,6 +40,18 @@ export function WorkoutLog() {
       .finally(() => setPlanLoading(false));
   }, []);
 
+  // Re-sync when navigated here again with fresh state (e.g. from dashboard
+  // "Log workout" after already mounting the log screen).
+  useEffect(() => {
+    if (location.state?.bulkSession) {
+      setBulkSession(location.state.bulkSession);
+      setMode(location.state.mode || 'bulk');
+    } else if (location.state?.session) {
+      setMode('live');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
   useEffect(() => {
     if (mode !== 'bulk' || bulkSession || location.state?.bulkSession) return;
     fitnessApi.getTodayBulkSession()
@@ -92,15 +104,19 @@ export function WorkoutLog() {
 
   if (!configuredPlans.length) {
     return (
-      <div className="workout-log workout-log--page workout-log--centered">
+      <div className="workout-log workout-log--page">
         <div className="workout-log__content">
-          <div className="workout-log__empty card workout-log__empty--plan">
-            <CalendarDays size={48} color="var(--color-primary)" />
-            <h2>No workout plan yet</h2>
-            <p>Build your weekly split in the planner, download a sheet, hit the gym offline, then log here.</p>
-            <button type="button" className="btn-primary" onClick={() => navigate('/planner')}>
-              Create Weekly Plan <ArrowRight size={14} />
-            </button>
+          <div className="workout-log-panel">
+            <div className="workout-log__empty card workout-log__empty--plan">
+              <CalendarDays size={48} color="var(--color-primary)" />
+              <h2>No workout plan yet</h2>
+              <p>Build your weekly split in the planner, download a sheet, hit the gym offline, then log here.</p>
+              <div className="workout-log__empty-actions">
+                <button type="button" className="btn-primary" onClick={() => navigate('/planner')}>
+                  Create Weekly Plan <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -108,7 +124,7 @@ export function WorkoutLog() {
   }
 
   return (
-    <div className="workout-log workout-log--page workout-log--centered">
+    <div className="workout-log workout-log--page">
       <div className="workout-log__toolbar">
         <div className="bulk-log__mode-tabs">
           <button
@@ -130,7 +146,7 @@ export function WorkoutLog() {
         </div>
 
         {selectedPlan && hasConfiguredPlan(selectedPlan) && (
-          <div className="workout-log__week-bar">
+          <div  className="workout-log__week-bar">
             <CalendarRange size={14} />
             <span>{selectedPlan.weekLabel || formatWeekRange(selectedPlan.weekStart)}</span>
             <button type="button" className="workout-log__week-change" onClick={() => openWeekModal(mode)}>
@@ -149,13 +165,17 @@ export function WorkoutLog() {
         ) : bulkSession ? (
           <BulkWorkoutLog session={bulkSession} onSessionChange={setBulkSession} />
         ) : (
-          <div className="bulk-log bulk-log__empty">
-            <Dumbbell size={48} color="var(--color-primary)" />
-            <h2>Log Workout Progress</h2>
-            <p>Choose a configured week and workout day, then record what you actually did.</p>
-            <button type="button" className="btn-primary" onClick={() => openWeekModal('bulk')} disabled={preparing}>
-              {preparing ? 'Loading plan…' : 'Select Week & Day'}
-            </button>
+          <div className="workout-log-panel">
+            <div className="workout-log__empty card workout-log__empty--session">
+              <Dumbbell class='make-it-mid' size={48} color="var(--color-primary)" />
+              <h2 style={{textAlign: 'center'}}>Log after gym</h2>
+              <p style={{textAlign: 'center'}} >Choose a configured week and workout day, then record what you actually did.</p>
+              <div className="workout-log__empty-actions">
+                <button type="button" className="btn-primary" onClick={() => openWeekModal('bulk')} disabled={preparing}>
+                  {preparing ? 'Loading plan…' : 'Select Week & Day'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

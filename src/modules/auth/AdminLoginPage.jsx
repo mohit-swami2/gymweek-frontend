@@ -55,6 +55,13 @@ export function AdminLoginPage() {
         <p style={{ marginTop: '16px', fontSize: '0.875rem', textAlign: 'center' }}>
           <Link to="/admin/forgot-password">Forgot password?</Link>
         </p>
+        <Link
+          to="/auth/login"
+          className="btn-secondary"
+          style={{ display: 'block', marginTop: '12px', textAlign: 'center', textDecoration: 'none', padding: '12px' }}
+        >
+          Login as User
+        </Link>
       </div>
     </div>
   );

@@ -23,8 +23,10 @@
 }
 
 .workout-log-panel {
-  padding: 24px;
+  padding: 24px 24px 0;
   max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .workout-log__hero {
@@ -391,10 +393,14 @@
 }
 
 .workout-log__finish {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
   width: 100%;
   padding: 16px;
   font-size: 1rem;
   margin-top: 8px;
+  box-shadow: 0 -10px 24px 8px var(--color-background);
 }
 
 .workout-log--centered .workout-log__content,
@@ -554,4 +560,13 @@
     max-height: 200px;
     width: 100%;
   }
+}
+
+.make-it-mid {
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  width: 100%;
+  margin-bottom: 16px;
 }

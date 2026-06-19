@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, X, ArrowLeft, ChevronRight, Plus, Calendar, Sparkles, Trash2, Pencil, ChevronUp, ChevronDown, Copy, Bookmark, Eye } from 'lucide-react';
+import { Save, X, ArrowLeft, ChevronRight, Plus, Calendar, Sparkles, Trash2, Pencil, ChevronUp, ChevronDown, Copy, Bookmark, Eye, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { Modal } from '../../common/components/Modal.jsx';
@@ -67,6 +67,8 @@ export function WeeklyPlanner() {
   const [hoverWeekOffset, setHoverWeekOffset] = useState(null);
   const [previewPlan, setPreviewPlan] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [loggedPlanIds, setLoggedPlanIds] = useState(() => new Set());
+  const [planLocked, setPlanLocked] = useState(false);
 
   const loadPlansList = useCallback(() => {
     return fitnessApi.getPlans({ limit: 100 }).then((res) => {
@@ -74,6 +76,22 @@ export function WeeklyPlanner() {
       setPlansList(configured);
     });
   }, []);
+
+  const loadLoggedPlanIds = useCallback(() => {
+    return fitnessApi.getSessions({ status: 'completed', limit: 200 })
+      .then((res) => {
+        const ids = (res.data || [])
+          .map((s) => String(s.planId?._id || s.planId || ''))
+          .filter(Boolean);
+        setLoggedPlanIds(new Set(ids));
+      })
+      .catch(() => {});
+  }, []);
+
+  const isPlanLogged = useCallback(
+    (p) => Boolean(p?._id) && loggedPlanIds.has(String(p._id)),
+    [loggedPlanIds],
+  );
 
   const loadExercises = useCallback(() => {
     return fitnessApi.getAllExercises({ sortBy: 'name', sortOrder: 'asc' }).then(setExercises);
@@ -84,10 +102,10 @@ export function WeeklyPlanner() {
   }, []);
 
   useEffect(() => {
-    Promise.all([loadPlansList(), loadExercises(), loadMuscleGroups()])
+    Promise.all([loadPlansList(), loadExercises(), loadMuscleGroups(), loadLoggedPlanIds()])
       .catch((err) => toast.error(err.message))
       .finally(() => setLoading(false));
-  }, [loadPlansList, loadExercises, loadMuscleGroups]);
+  }, [loadPlansList, loadExercises, loadMuscleGroups, loadLoggedPlanIds]);
 
   useEffect(() => {
     if (!plan?.splitType || !muscleGroups.length) return;
@@ -111,6 +129,7 @@ export function WeeklyPlanner() {
       }
       setPlan(hydratePlanDays(p, p.splitType));
       setWeekOffset(offset);
+      setPlanLocked(isPlanLogged(p));
       if (p.splitType) {
         setSelectedSplit(p.splitType);
         setIsEditingExisting(editing);
@@ -354,18 +373,26 @@ export function WeeklyPlanner() {
   const finishPlanAndReturnToList = () => {
     setShowSaveModal(false);
     setPlan(null);
+    setPlanLocked(false);
     setStep('list');
     loadPlansList();
+    loadLoggedPlanIds();
+  };
+
+  const getNextUnconfiguredDayIndex = () => {
+    if (!plan?.days?.length) return null;
+    const training = plan.days
+      .map((d, i) => ({ d, i }))
+      .filter(({ d }) => !d.isRestDay
+        && !getPlanDayStatus(d).isMissed
+        && (d.plannedExercises?.length || 0) === 0);
+    if (!training.length) return null;
+    return (training.find(({ i }) => i > activePlanDay) || training[0]).i;
   };
 
   const goToNextMuscleDay = () => {
     setShowSaveModal(false);
-    if (!plan?.days?.length) return;
-    const trainingIndexes = plan.days
-      .map((d, i) => ({ d, i }))
-      .filter(({ d }) => !d.isRestDay)
-      .map(({ i }) => i);
-    const next = trainingIndexes.find((i) => i > activePlanDay) ?? trainingIndexes[0];
+    const next = getNextUnconfiguredDayIndex();
     if (next != null) setActivePlanDay(next);
   };
 
@@ -388,11 +415,12 @@ export function WeeklyPlanner() {
     setActivePlanDay(firstEditable >= 0 ? firstEditable : 0);
   }, [step, plan?._id, isPartialWeek]);
 
-  const getPlanDayStatus = (day) => (
-    isPartialWeek
+  const getPlanDayStatus = (day) => {
+    if (planLocked) return { isEditable: false, isMissed: false, isLocked: true };
+    return isPartialWeek
       ? getDayStatus(DAY_KEYS.indexOf(day.dayOfWeek), plan?.weekStart)
-      : { isEditable: true, isMissed: false }
-  );
+      : { isEditable: true, isMissed: false };
+  };
 
   const renderPlanDayCard = (day, dayIndex) => {
     const status = getPlanDayStatus(day);
@@ -638,6 +666,7 @@ export function WeeklyPlanner() {
                 {plansList.map((p, rowIdx) => {
                   const isCurrent = isCurrentWeek(p.weekStart);
                   const isFuture = new Date(p.weekStart) > getWeekStartByOffset(0);
+                  const logged = isPlanLogged(p);
                   return (
                     <motion.tr
                       key={p._id}
@@ -651,9 +680,16 @@ export function WeeklyPlanner() {
                       <td>{p.splitType ? getSplitLabel(p.splitType) : '—'}</td>
                       <td>{countTrainingDays(p)} days</td>
                       <td>
-                        {isCurrent && <span className="plans-table__badge plans-table__badge--current">Current</span>}
-                        {isFuture && !isCurrent && <span className="plans-table__badge plans-table__badge--future">Upcoming</span>}
-                        {!isCurrent && !isFuture && <span className="plans-table__badge">Past</span>}
+                        <div className="plans-table__status">
+                          {isCurrent && <span className="plans-table__badge plans-table__badge--current">Current</span>}
+                          {isFuture && !isCurrent && <span className="plans-table__badge plans-table__badge--future">Upcoming</span>}
+                          {!isCurrent && !isFuture && <span className="plans-table__badge">Past</span>}
+                          {logged && (
+                            <span className="plans-table__badge plans-table__badge--logged">
+                              <Lock size={11} /> Logged
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <div className="plans-table__actions">
@@ -665,20 +701,37 @@ export function WeeklyPlanner() {
                           >
                             <Eye size={14} />
                           </button>
-                          <button
-                            type="button"
-                            className="btn-icon"
-                            title="Edit exercises & sets"
-                            onClick={() => {
-                              const offset = Math.round(
-                                (getMondayOfWeek(new Date(p.weekStart)).getTime() - getWeekStartByOffset(0).getTime())
-                                / (7 * 24 * 60 * 60 * 1000)
-                              );
-                              openPlanForWeek(offset, { editing: true });
-                            }}
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          {logged ? (
+                            <button
+                              type="button"
+                              className="btn-icon"
+                              title="Logged week — locked, view only"
+                              onClick={() => {
+                                const offset = Math.round(
+                                  (getMondayOfWeek(new Date(p.weekStart)).getTime() - getWeekStartByOffset(0).getTime())
+                                  / (7 * 24 * 60 * 60 * 1000)
+                                );
+                                openPlanForWeek(offset, { editing: true });
+                              }}
+                            >
+                              <Lock size={14} />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn-icon"
+                              title="Edit exercises & sets"
+                              onClick={() => {
+                                const offset = Math.round(
+                                  (getMondayOfWeek(new Date(p.weekStart)).getTime() - getWeekStartByOffset(0).getTime())
+                                  / (7 * 24 * 60 * 60 * 1000)
+                                );
+                                openPlanForWeek(offset, { editing: true });
+                              }}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="btn-danger"
@@ -843,6 +896,13 @@ export function WeeklyPlanner() {
             {plan.weekLabel || formatWeekRange(plan.weekStart)} · {getSplitLabel(plan.splitType)}
           </div>
 
+          {planLocked && (
+            <div className="planner-locked-banner">
+              <Lock size={15} />
+              <span>This week has logged workouts and is locked. View only — editing is disabled.</span>
+            </div>
+          )}
+
           <div className="planner-plan-layout">
             <div className="planner-plan-panel">
               <AnimatePresence mode="wait">
@@ -909,7 +969,7 @@ export function WeeklyPlanner() {
               <button type="button" className="btn-secondary" onClick={handleSaveTemplate}>
                 <Bookmark size={14} /> Template
               </button>
-              {activeDay && activeStatus.isEditable && (
+              {!planLocked && activeDay && activeStatus.isEditable && (
                 <button
                   type="button"
                   className="btn-secondary"
@@ -921,15 +981,17 @@ export function WeeklyPlanner() {
                   <Copy size={14} /> Duplicate day
                 </button>
               )}
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                <Save size={14} />
-                {saving ? 'Saving...' : 'Save Plan'}
-              </button>
+              {!planLocked && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  <Save size={14} />
+                  {saving ? 'Saving...' : 'Save Plan'}
+                </button>
+              )}
             </div>
           </div>
         </motion.div>
@@ -974,7 +1036,7 @@ export function WeeklyPlanner() {
         <div className="week-modal__more">
           <label>Or pick a future week</label>
           <div className="week-picker-scroll">
-            {Array.from({ length: MAX_WEEK_OFFSET + 1 }, (_, i) => i).map((offset) => {
+            {Array.from({ length: MAX_WEEK_OFFSET - 1 }, (_, i) => i + 2).map((offset) => {
               const isHovered = hoverWeekOffset === offset;
               return (
                 <motion.button
@@ -1013,8 +1075,9 @@ export function WeeklyPlanner() {
         quoteAuthor={saveQuote?.author}
         primaryLabel="Plan done"
         primaryAction={finishPlanAndReturnToList}
-        secondaryLabel="Next muscle"
-        secondaryAction={goToNextMuscleDay}
+        {...(getNextUnconfiguredDayIndex() != null
+          ? { secondaryLabel: 'Next muscle', secondaryAction: goToNextMuscleDay }
+          : {})}
       />
 
       <Modal

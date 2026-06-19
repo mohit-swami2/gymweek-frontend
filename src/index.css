@@ -987,9 +987,28 @@ input:focus, textarea:focus, select:focus {
 
 .modal__footer {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
   padding: 16px 24px 24px;
   border-top: 1px solid var(--color-border);
   background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.15));
+}
+
+/* Normalize action buttons inside modal footers so danger/secondary/primary
+   share the same size and alignment. */
+.modal__footer .btn-danger,
+.modal__footer .btn-secondary,
+.modal__footer .btn-primary {
+  padding: 10px 18px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 /* Password input */

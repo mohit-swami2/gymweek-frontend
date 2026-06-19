@@ -7,7 +7,7 @@ import {
 import { toast } from 'sonner';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { ComparisonPanel } from '../workout-logger/ComparisonPanel.jsx';
-import { ExportSheetModal } from '../export/ExportSheetModal.jsx';
+import { ExportHistoryModal } from '../export/ExportHistoryModal.jsx';
 import { Modal } from '../../common/components/Modal.jsx';
 import { DatePickerField } from '../../common/components/DatePickerField.jsx';
 import './session-history.css';
@@ -132,7 +132,7 @@ export function SessionHistoryView() {
           <p>Every logged session — planned vs actual, notes, and exports</p>
         </div>
         <button type="button" className="btn-secondary session-history__export-btn" onClick={() => setExportOpen(true)}>
-          <Download size={14} /> Export Sheet
+          <Download size={14} /> Export History
         </button>
       </motion.header>
 
@@ -318,7 +318,7 @@ export function SessionHistoryView() {
         )}
       </Modal>
 
-      <ExportSheetModal open={exportOpen} onClose={() => setExportOpen(false)} />
+      <ExportHistoryModal open={exportOpen} onClose={() => setExportOpen(false)} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { CalendarDays, ChevronLeft, Dumbbell, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../../common/components/Modal.jsx';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
@@ -69,12 +70,17 @@ export function SelectWeekModal({ open, onClose, onConfirm, title = 'Select work
 
   const handleConfirm = async () => {
     if (!selectedPlan || !selectedDay) return;
+    const sessionDate = getDateForPlanDay(selectedPlan.weekStart, selectedDay.dayOfWeek);
+    if (sessionDate > toLocalDateString(new Date())) {
+      toast.error("You can't log a workout for a future day");
+      return;
+    }
     setSubmitting(true);
     try {
       await onConfirm({
         plan: selectedPlan,
         dayOfWeek: selectedDay.dayOfWeek,
-        sessionDate: getDateForPlanDay(selectedPlan.weekStart, selectedDay.dayOfWeek),
+        sessionDate,
       });
     } finally {
       setSubmitting(false);
@@ -164,27 +170,36 @@ export function SelectWeekModal({ open, onClose, onConfirm, title = 'Select work
                   {selectedPlan?.weekLabel || formatWeekRange(selectedPlan?.weekStart)} — pick a workout day
                 </p>
                 <div className="week-select__day-grid">
-                  {workoutDays.map((day, i) => (
-                    <motion.button
-                      key={day.dayOfWeek}
-                      type="button"
-                      className={`week-select__day${selectedDay?.dayOfWeek === day.dayOfWeek ? ' week-select__day--active' : ''}`}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      onClick={() => setSelectedDay(day)}
-                    >
-                      <span className="week-select__day-label">{DAY_LABELS[day.dayOfWeek]}</span>
-                      <Dumbbell size={16} />
-                      <strong>{day.focus || 'Workout'}</strong>
-                      <span>{day.plannedExercises?.length || 0} exercises</span>
-                      {loggedDays.has(day.dayOfWeek) && (
-                        <span className="week-select__logged">
-                          <CheckCircle2 size={12} /> Logged — tap to edit
-                        </span>
-                      )}
-                    </motion.button>
-                  ))}
+                  {workoutDays.map((day, i) => {
+                    const todayStr = toLocalDateString(new Date());
+                    const dayDate = getDateForPlanDay(selectedPlan.weekStart, day.dayOfWeek);
+                    const isFuture = dayDate > todayStr;
+                    return (
+                      <motion.button
+                        key={day.dayOfWeek}
+                        type="button"
+                        disabled={isFuture}
+                        className={`week-select__day${selectedDay?.dayOfWeek === day.dayOfWeek ? ' week-select__day--active' : ''}${isFuture ? ' week-select__day--future' : ''}`}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => !isFuture && setSelectedDay(day)}
+                        title={isFuture ? "You can't log a workout for a future day" : undefined}
+                      >
+                        <span className="week-select__day-label">{DAY_LABELS[day.dayOfWeek]}</span>
+                        <Dumbbell size={16} />
+                        <strong>{day.focus || 'Workout'}</strong>
+                        <span>{day.plannedExercises?.length || 0} exercises</span>
+                        {isFuture ? (
+                          <span className="week-select__future-hint">Upcoming — can&apos;t log yet</span>
+                        ) : loggedDays.has(day.dayOfWeek) && (
+                          <span className="week-select__logged">
+                            <CheckCircle2 size={12} /> Logged — tap to edit
+                          </span>
+                        )}
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}

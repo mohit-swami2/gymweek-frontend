@@ -1,0 +1,60 @@
+.auth-layout {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--color-background);
+  overflow: hidden;
+}
+
+.auth-layout__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-layout__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 40%, black, transparent 75%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, black, transparent 75%);
+  opacity: 0.5;
+}
+
+.auth-layout__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+}
+
+.auth-layout__orb--1 {
+  width: 380px;
+  height: 380px;
+  top: -120px;
+  left: -100px;
+  background: var(--color-primary);
+}
+
+.auth-layout__orb--2 {
+  width: 420px;
+  height: 420px;
+  bottom: -140px;
+  right: -120px;
+  background: var(--color-accent);
+}
+
+.auth-layout__card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  backdrop-filter: blur(8px);
+}

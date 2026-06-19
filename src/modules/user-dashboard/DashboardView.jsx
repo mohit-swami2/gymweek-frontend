@@ -14,6 +14,7 @@ import { StreakMedalBadge } from '../planner/StreakMedalBadge.jsx';
 import { StreakAwardModal } from '../planner/StreakAwardModal.jsx';
 import { ExportSheetModal } from '../export/ExportSheetModal.jsx';
 import { SelectWeekModal } from '../workout-logger/SelectWeekModal.jsx';
+import { getMondayOfWeek, toLocalDateString } from '../../common/utils/dateUtils.js';
 import { DashboardSkeleton } from './DashboardSkeleton.jsx';
 import '../planner/streak-award-modal.css';
 
@@ -40,6 +41,7 @@ export function DashboardView() {
   const [todaySession, setTodaySession] = useState(null);
   const [sessionSummary, setSessionSummary] = useState(null);
   const [recentSessions, setRecentSessions] = useState([]);
+  const [weekSessions, setWeekSessions] = useState([]);
   const [prs, setPrs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkInModal, setCheckInModal] = useState(null);
@@ -50,28 +52,40 @@ export function DashboardView() {
   const [weekModalMode, setWeekModalMode] = useState('bulk');
   const [selectedMedal, setSelectedMedal] = useState(null);
 
-  const loadData = () => Promise.all([
-    fitnessApi.getSummary(),
-    fitnessApi.getCurrentPlan(),
-    fitnessApi.getVolumeProgress({ range: '4w', groupBy: 'week' }),
-    fitnessApi.getTodaySession(),
-    fitnessApi.getTodaySessionSummary(),
-    fitnessApi.getStreak(),
-    fitnessApi.getAdherence({ range: '4w' }),
-    fitnessApi.getSessions({ limit: 5, sortBy: 'sessionDate', sortOrder: 'desc', status: 'completed' }),
-    fitnessApi.getPRs({ limit: 4 }),
-  ]).then(([sumRes, planRes, volRes, sessionRes, summaryRes, streakRes, adhRes, recentRes, prRes]) => {
-    setSummary(sumRes.data[0]);
-    setPlan(planRes.data[0] || null);
-    setVolumeData(volRes.data[0]?.data || []);
-    setTodaySession(sessionRes.data[0] || null);
-    setSessionSummary(summaryRes.data[0] || null);
-    setStreakInfo(streakRes.data[0]);
-    setAdherence(adhRes.data[0]);
-    setRecentSessions(recentRes.data || []);
-    setPrs(prRes.data[0]?.prs || []);
-    setBulkDraft(summaryRes.data[0]?.bulkDraft || null);
-  });
+  const loadData = () => {
+    const weekStart = getMondayOfWeek();
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    return Promise.all([
+      fitnessApi.getSummary(),
+      fitnessApi.getCurrentPlan(),
+      fitnessApi.getVolumeProgress({ range: '4w', groupBy: 'week' }),
+      fitnessApi.getTodaySession(),
+      fitnessApi.getTodaySessionSummary(),
+      fitnessApi.getStreak(),
+      fitnessApi.getAdherence({ range: '4w' }),
+      fitnessApi.getSessions({ limit: 5, sortBy: 'sessionDate', sortOrder: 'desc', status: 'completed' }),
+      fitnessApi.getPRs({ limit: 4 }),
+      fitnessApi.getSessions({
+        from: toLocalDateString(weekStart),
+        to: toLocalDateString(weekEnd),
+        status: 'completed',
+        limit: 50,
+      }),
+    ]).then(([sumRes, planRes, volRes, sessionRes, summaryRes, streakRes, adhRes, recentRes, prRes, weekRes]) => {
+      setSummary(sumRes.data[0]);
+      setPlan(planRes.data[0] || null);
+      setVolumeData(volRes.data[0]?.data || []);
+      setTodaySession(sessionRes.data[0] || null);
+      setSessionSummary(summaryRes.data[0] || null);
+      setStreakInfo(streakRes.data[0]);
+      setAdherence(adhRes.data[0]);
+      setRecentSessions(recentRes.data || []);
+      setWeekSessions(weekRes.data || []);
+      setPrs(prRes.data[0]?.prs || []);
+      setBulkDraft(summaryRes.data[0]?.bulkDraft || null);
+    });
+  };
 
   useEffect(() => {
     loadData()
@@ -152,7 +166,7 @@ export function DashboardView() {
 
   const weekData = DAY_KEYS.map((key, i) => {
     const day = plan?.days?.find((d) => d.dayOfWeek === key);
-    const completed = recentSessions.some(
+    const completed = weekSessions.some(
       (s) => s.dayOfWeek === key && sessionInPlanWeek(s, plan?.weekStart),
     );
     return {

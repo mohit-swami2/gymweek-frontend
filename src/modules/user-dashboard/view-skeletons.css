@@ -93,20 +93,34 @@
   margin-bottom: 20px;
 }
 
-.workout-log-skeleton {
-  padding: 24px;
-  max-width: 720px;
-}
-
-.workout-log-skeleton__toolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
 .workout-log-skeleton__tab {
   width: 140px;
   height: 38px;
+  border-radius: 8px;
+}
+
+.workout-log-skeleton__weekbar {
+  height: 40px;
+  margin-top: 12px;
+  border-radius: 8px;
+}
+
+.workout-log-skeleton__hero {
+  height: 64px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+}
+
+.workout-log-skeleton__bar {
+  height: 28px;
+  margin-bottom: 20px;
+  border-radius: 999px;
+}
+
+.workout-log-skeleton__card {
+  height: 120px;
+  margin-bottom: 14px;
+  border-radius: 16px;
 }
 
 .session-history__stats--loading .session-history__stat {

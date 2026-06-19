@@ -71,6 +71,7 @@ export function BulkWorkoutLog({ session: initialSession, onSessionChange }) {
       if (result.badgesEarned?.length) toast.success(`Badge: ${result.badgesEarned.map((b) => b.name).join(', ')}`);
       setComparison(result.comparison);
       setSession(result.session);
+      onSessionChange?.(result.session);
       toast.success(isEditing ? 'Workout updated' : 'Workout logged');
     } catch (err) {
       toast.error(err.message);

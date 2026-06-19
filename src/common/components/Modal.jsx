@@ -3,17 +3,17 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export function Modal({ open, onClose, title, children, footer, size = 'md', backdrop = 'dark', scrollBody = false }) {
+export function Modal({ open, onClose, title, children, footer, size = 'md', backdrop = 'dark', scrollBody = false, closeOnBackdrop = true }) {
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
+    const onKey = (e) => { if (e.key === 'Escape' && closeOnBackdrop) onClose?.(); };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
+  }, [open, onClose, closeOnBackdrop]);
 
   return createPortal(
     <AnimatePresence>
@@ -23,7 +23,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md', bac
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={closeOnBackdrop ? onClose : undefined}
         >
           <motion.div
             className={`modal modal--${size}${scrollBody ? ' modal--scroll' : ''}`}

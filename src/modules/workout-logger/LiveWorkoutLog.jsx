@@ -189,9 +189,9 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
       return (
         <div className="workout-log-panel">
           <motion.div className="workout-log__empty card workout-log__empty--session workout-log__empty--done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <CheckCircle2 size={48} color="var(--color-primary)" />
-            <h2>Today&apos;s workout done</h2>
-            <p>
+            <CheckCircle2 class='make-it-mid' size={48} color="var(--color-primary)" />
+            <h2 style={{textAlign: 'center'}}>Today&apos;s workout done</h2>
+            <p style={{textAlign: 'center'}}>
               You already logged {todayCompleted.dayOfWeek}&apos;s session
               {todayCompleted.totalVolume ? ` · ${todayCompleted.totalVolume.toLocaleString()} kg` : ''}.
               Live tracking isn&apos;t needed unless you want another session.

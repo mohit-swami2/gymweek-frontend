@@ -288,6 +288,7 @@ export function UsersManagement() {
         title={editing ? 'Edit User' : 'Add New User'}
         size="sm"
         backdrop="blue"
+        closeOnBackdrop={false}
       >
         <label style={labelStyle}>Full name</label>
         <input
