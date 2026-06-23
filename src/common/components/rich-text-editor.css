@@ -1,0 +1,108 @@
+.rte {
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-background, #0f172a);
+}
+
+.rte__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--color-surface, #1e293b);
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+}
+
+.rte__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted, #94a3b8);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rte__btn:hover:not(:disabled) {
+  background: var(--color-primary, #3b82f6);
+  color: var(--primary-foreground, #fff);
+}
+
+.rte__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rte__btn--active {
+  background: var(--color-primary, #3b82f6);
+  color: var(--primary-foreground, #fff);
+}
+
+.rte__divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: var(--color-border, rgba(255, 255, 255, 0.15));
+}
+
+.rte__spacer {
+  flex: 1;
+}
+
+.rte__editable {
+  padding: 14px 16px;
+  color: var(--color-text, #f0f0f0);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  outline: none;
+  overflow-y: auto;
+  max-height: 520px;
+}
+
+.rte__editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-muted, #6b7280);
+  pointer-events: none;
+}
+
+.rte__editable:focus {
+  box-shadow: inset 0 0 0 2px var(--color-primary, #3b82f6);
+}
+
+.rte__editable h1 { font-size: 1.6rem; margin: 0.6em 0 0.3em; }
+.rte__editable h2 { font-size: 1.3rem; margin: 0.6em 0 0.3em; }
+.rte__editable p { margin: 0 0 0.8em; }
+.rte__editable ul,
+.rte__editable ol { margin: 0 0 0.8em; padding-left: 1.5em; }
+.rte__editable a { color: var(--color-primary, #3b82f6); text-decoration: underline; }
+.rte__editable blockquote {
+  margin: 0 0 0.8em;
+  padding: 6px 14px;
+  border-left: 3px solid var(--color-primary, #3b82f6);
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.rte__source {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  resize: vertical;
+  background: var(--color-background, #0f172a);
+  color: var(--color-text, #f0f0f0);
+  font-family: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  outline: none;
+}
+
+.rte__source:focus {
+  box-shadow: inset 0 0 0 2px var(--color-primary, #3b82f6);
+}

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { fitnessApi } from '../../common/api/fitnessApi.js';
 import { ExerciseMedia, getExerciseMediaUrls } from './ExerciseMedia.jsx';
 import { DAY_KEYS } from './BulkWorkoutLog.jsx';
+import { saveLiveDraft, loadLiveDraft, clearLiveDraft } from './liveDraftStore.js';
 import './workout-log.css';
 
 function muscleLabel(ex) {
@@ -31,8 +32,12 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
   const [finishing, setFinishing] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
+  const [pendingSync, setPendingSync] = useState(false);
   const timerRef = useRef(null);
   const activeRef = useRef(null);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  const restoredRef = useRef(new Set());
 
   useEffect(() => {
     if (planProp) setPlan(planProp);
@@ -101,7 +106,52 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
   const totalVolume = logs.reduce((sum, ex) =>
     sum + ex.setLogs.filter((s) => s.completed).reduce((s, set) => s + (set.actualWeight || 0) * (set.actualReps || 0), 0), 0);
 
-  const toggleSet = async (exIndex, setIndex) => {
+  // Persist + push the live set matrix. On failure the optimistic toggle is
+  // reverted (L4A) and the change is buffered locally for retry (L4B).
+  const syncExerciseLogs = async (exerciseLogs, { exIndex, setIndex, previousSet } = {}) => {
+    saveLiveDraft(session._id, { exerciseLogs, pendingSync: true });
+    try {
+      const res = await fitnessApi.logSession(session._id, { exerciseLogs });
+      setSession(res.data[0]);
+      saveLiveDraft(session._id, { exerciseLogs: res.data[0].exerciseLogs, pendingSync: false });
+      setPendingSync(false);
+    } catch (err) {
+      // Revert only the one set the user just toggled, keep everything else.
+      if (exIndex != null && setIndex != null) {
+        setSession((cur) => {
+          const reverted = cur.exerciseLogs.map((ex, i) => (
+            i !== exIndex
+              ? ex
+              : { ...ex, setLogs: ex.setLogs.map((s, j) => (j !== setIndex ? s : previousSet)) }
+          ));
+          saveLiveDraft(cur._id, { exerciseLogs: reverted, pendingSync: true });
+          return { ...cur, exerciseLogs: reverted };
+        });
+      }
+      setPendingSync(true);
+      toast.error(err.message || 'Network issue — change saved offline', {
+        action: { label: 'Retry', onClick: () => retrySync() },
+      });
+    }
+  };
+
+  const retrySync = async () => {
+    const current = sessionRef.current;
+    if (!current?._id) return;
+    setPendingSync(false);
+    try {
+      const res = await fitnessApi.logSession(current._id, { exerciseLogs: current.exerciseLogs });
+      setSession(res.data[0]);
+      saveLiveDraft(current._id, { exerciseLogs: res.data[0].exerciseLogs, pendingSync: false });
+      toast.success('Synced');
+    } catch (err) {
+      setPendingSync(true);
+      toast.error(err.message || 'Still offline — will retry');
+    }
+  };
+
+  const toggleSet = (exIndex, setIndex) => {
+    const previousSet = session.exerciseLogs[exIndex]?.setLogs?.[setIndex];
     // Immutably update nested logs — avoid mutating React state in place.
     const exerciseLogs = session.exerciseLogs.map((ex, i) => {
       if (i !== exIndex) return ex;
@@ -114,14 +164,9 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
       });
       return { ...ex, setLogs };
     });
-    const updated = { ...session, exerciseLogs };
-    setSession(updated);
-    try {
-      const res = await fitnessApi.logSession(session._id, { exerciseLogs });
-      setSession(res.data[0]);
-    } catch (err) {
-      toast.error(err.message);
-    }
+    // Reflect the tap instantly, then reconcile with the server in the background.
+    setSession({ ...session, exerciseLogs });
+    syncExerciseLogs(exerciseLogs, { exIndex, setIndex, previousSet });
   };
 
   const handleFinish = async () => {
@@ -133,6 +178,8 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
       if (result.newPRs?.length) toast.success(`New PR! ${result.newPRs.length} record(s) broken!`);
       if (result.badgesEarned?.length) toast.success(`Badge earned: ${result.badgesEarned.map((b) => b.name).join(', ')}`);
       toast.success('Workout complete!');
+      clearLiveDraft(session._id);
+      setPendingSync(false);
       setSession(result.session);
       const summaryRes = await fitnessApi.getTodaySessionSummary();
       setSessionSummary(summaryRes.data[0]);
@@ -172,6 +219,33 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
       toast.error(err.message);
     }
   };
+
+  // L4B — recover any unsynced offline draft once the session id is known, and
+  // attempt to flush it to the backend (e.g. after a reload or tab reopen).
+  useEffect(() => {
+    const id = session?._id;
+    if (!id || restoredRef.current.has(id)) return;
+    restoredRef.current.add(id);
+    const draft = loadLiveDraft(id);
+    if (draft?.pendingSync && Array.isArray(draft.exerciseLogs)) {
+      setSession((cur) => (cur && cur._id === id ? { ...cur, exerciseLogs: draft.exerciseLogs } : cur));
+      setPendingSync(true);
+      fitnessApi.logSession(id, { exerciseLogs: draft.exerciseLogs })
+        .then((res) => {
+          setSession(res.data[0]);
+          saveLiveDraft(id, { exerciseLogs: res.data[0].exerciseLogs, pendingSync: false });
+          setPendingSync(false);
+        })
+        .catch(() => { /* stay pending — user can retry */ });
+    }
+  }, [session?._id]);
+
+  // Auto-flush pending changes the moment connectivity is restored.
+  useEffect(() => {
+    const onOnline = () => { if (pendingSync) retrySync(); };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [pendingSync]);
 
   if (sessionLoading || summaryLoading) {
     return <WorkoutLogSkeleton />;
@@ -274,6 +348,13 @@ export function LiveWorkoutLog({ plan: planProp, onRequestWeekSelect }) {
         <div className="workout-log__progress-label"><span>Progress</span><span>{progress.done} / {progress.total}</span></div>
         <div className="workout-log__progress-bar"><div className="workout-log__progress-fill" style={{ width: `${progress.pct}%` }} /></div>
       </div>
+
+      {pendingSync && (
+        <div className="workout-log__sync-banner" role="status">
+          <span>Changes saved offline — not yet synced.</span>
+          <button type="button" className="btn-secondary" onClick={retrySync}>Retry sync</button>
+        </div>
+      )}
 
       {activeExercise && (
         <div className="workout-log__now card">

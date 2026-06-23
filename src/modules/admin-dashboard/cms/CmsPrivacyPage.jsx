@@ -18,7 +18,7 @@ export function CmsPrivacyPage() {
         { name: 'title', label: 'Title' },
         { name: 'slug', label: 'URL Slug' },
         { name: 'version', label: 'Version' },
-        { name: 'content', label: 'HTML Content', type: 'textarea', rows: 16 },
+        { name: 'content', label: 'Content', type: 'richtext', rows: 16 },
         { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published', 'archived'] },
       ]}
       renderPreview={(form) => (

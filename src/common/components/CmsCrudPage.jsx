@@ -5,6 +5,7 @@ import { DataTable } from './DataTable.jsx';
 import { Modal } from './Modal.jsx';
 import { AdminPageShell } from '../../modules/admin-dashboard/AdminPageShell.jsx';
 import { HtmlPreview } from './PreviewPanel.jsx';
+import { RichTextEditor } from './RichTextEditor.jsx';
 import { StatusBadge } from './StatusBadge.jsx';
 
 export function CmsCrudPage({
@@ -167,7 +168,13 @@ export function CmsCrudPage({
           {formFields.map((field) => (
             <div key={field.name} className="admin-form__field">
               <label htmlFor={`cms-${field.name}`}>{field.label}</label>
-              {field.type === 'textarea' ? (
+              {field.type === 'richtext' ? (
+                <RichTextEditor
+                  value={form[field.name] || ''}
+                  onChange={(html) => setForm({ ...form, [field.name]: html })}
+                  minHeight={(field.rows || 12) * 22}
+                />
+              ) : field.type === 'textarea' ? (
                 <textarea
                   id={`cms-${field.name}`}
                   rows={field.rows || 6}

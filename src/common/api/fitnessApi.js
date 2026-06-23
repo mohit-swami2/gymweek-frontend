@@ -1,4 +1,6 @@
 import { websiteApi } from './client.js';
+import { toLocalDateString } from '../utils/dateUtils.js';
+import { compressImage } from '../utils/imageCompression.js';
 
 const downloadBlob = (blob, filename) => {
   const url = URL.createObjectURL(blob);
@@ -35,7 +37,9 @@ export const fitnessApi = {
   prepareSession: (data) => websiteApi.post('/sessions/prepare', data),
   startSession: (data) => websiteApi.post('/sessions/start', data),
   logSession: (id, data) => websiteApi.patch(`/sessions/${id}/log`, data),
-  finishSession: (id, data) => websiteApi.patch(`/sessions/${id}/finish`, data),
+  // Always attach the client's local calendar day so streak math stays
+  // timezone-resilient regardless of where the API server runs (L2B).
+  finishSession: (id, data = {}) => websiteApi.patch(`/sessions/${id}/finish`, { localDate: toLocalDateString(new Date()), ...data }),
   getSession: (id) => websiteApi.get(`/sessions/${id}`),
   getSessionComparison: (id) => websiteApi.get(`/sessions/${id}/comparison`),
   duplicateSession: (id) => websiteApi.post(`/sessions/${id}/duplicate`),
@@ -63,7 +67,7 @@ export const fitnessApi = {
   getPRs: (params) => websiteApi.get('/progress/prs', { params }),
 
   // Check-in
-  checkIn: (data) => websiteApi.post('/checkins', data),
+  checkIn: (data = {}) => websiteApi.post('/checkins', { localDate: toLocalDateString(new Date()), ...data }),
 
   // Profile
   getProfile: () => websiteApi.get('/users/profile'),
@@ -71,6 +75,33 @@ export const fitnessApi = {
 
   // Badges
   getBadges: () => websiteApi.get('/badges'),
+
+  // Progress photos — compress to WebP in-browser before the presigned S3 upload (L4D)
+  getProgressPhotos: (params) => websiteApi.get('/photos', { params }),
+  uploadProgressPhoto: async (file, { caption, takenAt } = {}) => {
+    const compressed = await compressImage(file);
+    const presign = await websiteApi.post('/photos/presigned', {
+      fileName: compressed.name,
+      mimeType: compressed.type,
+    });
+    const { uploadUrl, s3Key } = presign.data?.[0] || {};
+    if (!uploadUrl || !s3Key) throw new Error('Could not prepare photo upload');
+
+    const putRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': compressed.type },
+      body: compressed,
+    });
+    if (!putRes.ok) throw new Error('Photo upload failed');
+
+    return websiteApi.post('/photos', {
+      s3Key,
+      caption,
+      takenAt: takenAt || new Date().toISOString(),
+      fileSize: compressed.size,
+      mimeType: compressed.type,
+    });
+  },
 
   // Export
   getExportThemes: () => websiteApi.get('/export/themes'),

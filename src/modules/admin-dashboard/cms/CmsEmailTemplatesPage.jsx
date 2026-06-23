@@ -18,7 +18,7 @@ export function CmsEmailTemplatesPage() {
         { name: 'key', label: 'Template Key' },
         { name: 'name', label: 'Display Name' },
         { name: 'subject', label: 'Email Subject' },
-        { name: 'body', label: 'HTML Body (use {{placeholders}})', type: 'textarea', rows: 12 },
+        { name: 'body', label: 'Email Body (use {{placeholders}})', type: 'richtext', rows: 12 },
         { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published', 'archived'] },
       ]}
       renderPreview={(form) => <HtmlPreview html={form.body?.replace(/\{\{name\}\}/g, 'Alex').replace(/\{\{resetUrl\}\}/g, '#').replace(/\{\{dashboardUrl\}\}/g, '/dashboard')} />}

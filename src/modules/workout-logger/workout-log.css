@@ -14,6 +14,26 @@
   padding: 16px 24px 0;
 }
 
+.workout-log__sync-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 77, 0, 0.12);
+  border: 1px solid rgba(255, 77, 0, 0.35);
+  color: var(--color-text);
+  font-size: 0.85rem;
+}
+
+.workout-log__sync-banner button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
 .workout-log__content {
   flex: 1;
   min-height: 0;
